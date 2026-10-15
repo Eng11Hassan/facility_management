@@ -1,0 +1,1098 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>نظام إدارة المرافق — BGC</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Cairo:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="./supabase-config.js"></script>
+
+<script>
+/* بيانات حصر الأصول (ثابتة) — البلاغات تُحفظ في المتصفح */
+const EMBEDDED_ASSETS = [{"code": "BGC-AST-001", "apartment": "شقة 1", "office": "عام", "category": "لوحات كهرباء", "name": "لوحة كهرباء 36 خط", "quantity": 1, "status": "يعمل بحالة جيدة", "pm_period": 6, "next_pm": "2027-04-15"}, {"code": "BGC-AST-002", "apartment": "شقة 1", "office": "مكتب مهندس عيسى", "category": "إضاءة", "name": "سبوتات", "quantity": 18, "status": "يعمل بحالة جيدة", "pm_period": 12, "next_pm": "2027-10-15"}, {"code": "BGC-AST-003", "apartment": "شقة 1", "office": "مكتب مهندس عيسى", "category": "إضاءة", "name": "نجفة", "quantity": 2, "status": "يعمل بحالة جيدة", "pm_period": 12, "next_pm": "2027-10-15"}, {"code": "BGC-AST-004", "apartment": "شقة 1", "office": "مكتب مهندس عيسى", "category": "أمان وإنذار", "name": "حساس حريق", "quantity": 2, "status": "يعمل بحالة جيدة", "pm_period": 6, "next_pm": "2027-04-15"}, {"code": "BGC-AST-005", "apartment": "شقة 1", "office": "مكتب مهندس عيسى", "category": "تكييف", "name": "تكييف 3 حصان", "quantity": 2, "status": "يعمل بحالة جيدة", "pm_period": 3, "next_pm": "2027-01-15"}, {"code": "BGC-AST-006", "apartment": "شقة 1", "office": "مكتب أستاذة سحر", "category": "إضاءة", "name": "خط ليد", "quantity": 2, "status": "يعمل بحالة جيدة", "pm_period": 12, "next_pm": "2027-10-15"}, {"code": "BGC-AST-007", "apartment": "شقة 1", "office": "مكتب أستاذة سحر", "category": "إضاءة", "name": "سبوتات", "quantity": 6, "status": "يعمل بحالة جيدة", "pm_period": 12, "next_pm": "2027-10-15"}, {"code": "BGC-AST-008", "apartment": "شقة 1", "office": "مكتب أستاذة سحر", "category": "أمان وإنذار", "name": "حساس حريق", "quantity": 1, "status": "يعمل بحالة جيدة", "pm_period": 6, "next_pm": "2027-04-15"}, {"code": "BGC-AST-009", "apartment": "شقة 1", "office": "مكتب أستاذة أميرة", "category": "إضاءة", "name": "سبوتات", "quantity": 10, "status": "يعمل بحالة جيدة", "pm_period": 12, "next_pm": "2027-10-15"}, {"code": "BGC-AST-010", "apartment": "شقة 1", "office": "مكتب أستاذة أميرة", "category": "إضاءة", "name": "كشاف مدور", "quantity": 2, "status": "يعمل بحالة جيدة", "pm_period": 12, "next_pm": "2027-10-15"}, {"code": "BGC-AST-011", "apartment": "شقة 1", "office": "مكتب أستاذة أميرة", "category": "أمان وإنذار", "name": "حساس", "quantity": 2, "status": "يعمل بحالة جيدة", "pm_period": 6, "next_pm": "2027-04-15"}, {"code": "BGC-AST-012", "apartment": "شقة 1", "office": "مكتب أستاذة أميرة", "category": "تكييف", "name": "تكييف 1.5 حصان", "quantity": 1, "status": "يعمل بحالة جيدة", "pm_period": 3, "next_pm": "2027-01-15"}, {"code": "BGC-AST-013", "apartment": "شقة 1", "office": "الطرقة", "category": "إضاءة", "name": "سبوتات", "quantity": 12, "status": "يعمل بحالة جيدة", "pm_period": 12, "next_pm": "2027-10-15"}, {"code": "BGC-AST-014", "apartment": "شقة 1", "office": "الطرقة", "category": "إضاءة", "name": "ماجنتيك", "quantity": 1, "status": "يعمل بحالة جيدة", "pm_period": 12, "next_pm": "2027-10-15"}, {"code": "BGC-AST-015", "apartment": "شقة 1", "office": "الطرقة", "category": "أمان وإنذار", "name": "حساس", "quantity": 2, "status": "يعمل بحالة جيدة", "pm_period": 6, "next_pm": "2027-04-15"}, {"code": "BGC-AST-016", "apartment": "شقة 1", "office": "الطرقة", "category": "أمان وإنذار", "name": "كاميرا", "quantity": 2, "status": "يعمل بحالة جيدة", "pm_period": 6, "next_pm": "2027-04-15"}, {"code": "BGC-AST-017", "apartment": "شقة 1", "office": "الطرقة", "category": "تكييف", "name": "تكييف 2.25 حصان", "quantity": 1, "status": "يعمل بحالة جيدة", "pm_period": 3, "next_pm": "2027-01-15"}, {"code": "BGC-AST-018", "apartment": "شقة 1", "office": "مكتب مهندس محسن", "category": "إضاءة", "name": "سبوتات", "quantity": 12, "status": "يعمل بحالة جيدة", "pm_period": 12, "next_pm": "2027-10-15"}, {"code": "BGC-AST-019", "apartment": "شقة 1", "office": "مكتب مهندس محسن", "category": "إضاءة", "name": "ليد", "quantity": 1, "status": "يعمل بحالة جيدة", "pm_period": 12, "next_pm": "2027-10-15"}, {"code": "BGC-AST-020", "apartment": "شقة 1", "office": "مكتب مهندس محسن", "category": "أمان وإنذار", "name": "حساس", "quantity": 2, "status": "يعمل بحالة جيدة", "pm_period": 6, "next_pm": "2027-04-15"}, {"code": "BGC-AST-021", "apartment": "شقة 1", "office": "مكتب مهندس محسن", "category": "تكييف", "name": "تكييف 2.75 حصان", "quantity": 1, "status": "يعمل بحالة جيدة", "pm_period": 3, "next_pm": "2027-01-15"}, {"code": "BGC-AST-022", "apartment": "شقة 1", "office": "مكتب أستاذة شروق", "category": "إضاءة", "name": "سبوتات", "quantity": 12, "status": "يعمل بحالة جيدة", "pm_period": 12, "next_pm": "2027-10-15"}, {"code": "BGC-AST-023", "apartment": "شقة 1", "office": "مكتب أستاذة شروق", "category": "إضاءة", "name": "نجفة", "quantity": 2, "status": "يعمل بحالة جيدة", "pm_period": 12, "next_pm": "2027-10-15"}, {"code": "BGC-AST-024", "apartment": "شقة 1", "office": "مكتب أستاذة شروق", "category": "أمان وإنذار", "name": "حساس", "quantity": 1, "status": "يعمل بحالة جيدة", "pm_period": 6, "next_pm": "2027-04-15"}, {"code": "BGC-AST-025", "apartment": "شقة 1", "office": "مكتب أستاذة شروق", "category": "تكييف", "name": "تكييف 2.75 حصان", "quantity": 1, "status": "يعمل بحالة جيدة", "pm_period": 3, "next_pm": "2027-01-15"}, {"code": "BGC-AST-026", "apartment": "شقة 1", "office": "مكتب مهندس محمود", "category": "إضاءة", "name": "سبوتات", "quantity": 12, "status": "يعمل بحالة جيدة", "pm_period": 12, "next_pm": "2027-10-15"}, {"code": "BGC-AST-027", "apartment": "شقة 1", "office": "مكتب مهندس محمود", "category": "إضاءة", "name": "نجفة", "quantity": 1, "status": "يعمل بحالة جيدة", "pm_period": 12, "next_pm": "2027-10-15"}, {"code": "BGC-AST-028", "apartment": "شقة 1", "office": "مكتب مهندس محمود", "category": "أمان وإنذار", "name": "حساس", "quantity": 1, "status": "يعمل بحالة جيدة", "pm_period": 6, "next_pm": "2027-04-15"}, {"code": "BGC-AST-029", "apartment": "شقة 1", "office": "مكتب مهندس محمود", "category": "تكييف", "name": "تكييف 2.25 حصان", "quantity": 1, "status": "يعمل بحالة جيدة", "pm_period": 3, "next_pm": "2027-01-15"}, {"code": "BGC-AST-030", "apartment": "شقة 2", "office": "عام", "category": "لوحات كهرباء", "name": "لوحة كهرباء 36 خط", "quantity": 1, "status": "يعمل بحالة جيدة", "pm_period": 6, "next_pm": "2027-04-15"}, {"code": "BGC-AST-031", "apartment": "شقة 2", "office": "مكتب المشروعات", "category": "إضاءة", "name": "سبوتات", "quantity": 9, "status": "يعمل بحالة جيدة", "pm_period": 12, "next_pm": "2027-10-15"}, {"code": "BGC-AST-032", "apartment": "شقة 2", "office": "مكتب المشروعات", "category": "إضاءة", "name": "نجفة", "quantity": 1, "status": "يعمل بحالة جيدة", "pm_period": 12, "next_pm": "2027-10-15"}, {"code": "BGC-AST-033", "apartment": "شقة 2", "office": "مكتب المشروعات", "category": "أمان وإنذار", "name": "حساس", "quantity": 1, "status": "يعمل بحالة جيدة", "pm_period": 6, "next_pm": "2027-04-15"}, {"code": "BGC-AST-034", "apartment": "شقة 2", "office": "مكتب المشروعات", "category": "إضاءة", "name": "شريط ليد", "quantity": 1, "status": "يعمل بحالة جيدة", "pm_period": 12, "next_pm": "2027-10-15"}, {"code": "BGC-AST-035", "apartment": "شقة 2", "office": "مكتب المشروعات", "category": "تكييف", "name": "تكييف 2.25 حصان", "quantity": 1, "status": "يعمل بحالة جيدة", "pm_period": 3, "next_pm": "2027-01-15"}, {"code": "BGC-AST-036", "apartment": "شقة 2", "office": "مكتب مهندس عزب", "category": "إضاءة", "name": "سبوتات", "quantity": 7, "status": "يعمل بحالة جيدة", "pm_period": 12, "next_pm": "2027-10-15"}, {"code": "BGC-AST-037", "apartment": "شقة 2", "office": "مكتب مهندس عزب", "category": "إضاءة", "name": "نجفة", "quantity": 1, "status": "يعمل بحالة جيدة", "pm_period": 12, "next_pm": "2027-10-15"}, {"code": "BGC-AST-038", "apartment": "شقة 2", "office": "مكتب مهندس عزب", "category": "أمان وإنذار", "name": "حساس", "quantity": 1, "status": "يعمل بحالة جيدة", "pm_period": 6, "next_pm": "2027-04-15"}, {"code": "BGC-AST-039", "apartment": "شقة 2", "office": "مكتب مهندس عزب", "category": "تكييف", "name": "تكييف 2.25 حصان", "quantity": 1, "status": "يعمل بحالة جيدة", "pm_period": 3, "next_pm": "2027-01-15"}, {"code": "BGC-AST-040", "apartment": "شقة 2", "office": "مكتب مهندس خالد", "category": "إضاءة", "name": "سبوتات", "quantity": 12, "status": "يعمل بحالة جيدة", "pm_period": 12, "next_pm": "2027-10-15"}, {"code": "BGC-AST-041", "apartment": "شقة 2", "office": "مكتب مهندس خالد", "category": "إضاءة", "name": "نجفة", "quantity": 1, "status": "يعمل بحالة جيدة", "pm_period": 12, "next_pm": "2027-10-15"}, {"code": "BGC-AST-042", "apartment": "شقة 2", "office": "مكتب مهندس خالد", "category": "أمان وإنذار", "name": "حساس", "quantity": 1, "status": "يعمل بحالة جيدة", "pm_period": 6, "next_pm": "2027-04-15"}, {"code": "BGC-AST-043", "apartment": "شقة 2", "office": "مكتب مهندس خالد", "category": "إضاءة", "name": "ليد", "quantity": 1, "status": "يعمل بحالة جيدة", "pm_period": 12, "next_pm": "2027-10-15"}, {"code": "BGC-AST-044", "apartment": "شقة 2", "office": "مكتب مهندس خالد", "category": "تكييف", "name": "تكييف 2.25 حصان", "quantity": 1, "status": "يعمل بحالة جيدة", "pm_period": 3, "next_pm": "2027-01-15"}, {"code": "BGC-AST-045", "apartment": "شقة 2", "office": "طرقة الشقة الثانية", "category": "إضاءة", "name": "سبوتات", "quantity": 10, "status": "يعمل بحالة جيدة", "pm_period": 12, "next_pm": "2027-10-15"}, {"code": "BGC-AST-046", "apartment": "شقة 2", "office": "طرقة الشقة الثانية", "category": "أمان وإنذار", "name": "حساس", "quantity": 2, "status": "يعمل بحالة جيدة", "pm_period": 6, "next_pm": "2027-04-15"}, {"code": "BGC-AST-047", "apartment": "شقة 2", "office": "طرقة الشقة الثانية", "category": "أمان وإنذار", "name": "كاميرا", "quantity": 1, "status": "يعمل بحالة جيدة", "pm_period": 6, "next_pm": "2027-04-15"}, {"code": "BGC-AST-048", "apartment": "شقة 2", "office": "حمام الطرقة", "category": "إضاءة", "name": "سبوتات", "quantity": 4, "status": "يعمل بحالة جيدة", "pm_period": 12, "next_pm": "2027-10-15"}, {"code": "BGC-AST-049", "apartment": "شقة 2", "office": "حمام الطرقة", "category": "أجهزة أخرى", "name": "سخان", "quantity": 1, "status": "يعمل بحالة جيدة", "pm_period": 12, "next_pm": "2027-10-15"}, {"code": "BGC-AST-050", "apartment": "شقة 2", "office": "غرفة IT", "category": "إضاءة", "name": "سبوتات", "quantity": 4, "status": "يعمل بحالة جيدة", "pm_period": 12, "next_pm": "2027-10-15"}, {"code": "BGC-AST-051", "apartment": "شقة 2", "office": "غرفة IT", "category": "إضاءة", "name": "كشاف ليد مسطرة", "quantity": 1, "status": "يعمل بحالة جيدة", "pm_period": 12, "next_pm": "2027-10-15"}, {"code": "BGC-AST-052", "apartment": "شقة 2", "office": "غرفة IT", "category": "أمان وإنذار", "name": "كاميرا", "quantity": 1, "status": "يعمل بحالة جيدة", "pm_period": 6, "next_pm": "2027-04-15"}, {"code": "BGC-AST-053", "apartment": "شقة 2", "office": "غرفة IT", "category": "أمان وإنذار", "name": "حساس", "quantity": 1, "status": "يعمل بحالة جيدة", "pm_period": 6, "next_pm": "2027-04-15"}, {"code": "BGC-AST-054", "apartment": "شقة 2", "office": "غرفة IT", "category": "تكييف", "name": "تكييف 2.25 حصان", "quantity": 1, "status": "يعمل بحالة جيدة", "pm_period": 3, "next_pm": "2027-01-15"}, {"code": "BGC-AST-055", "apartment": "شقة 2", "office": "غرفة IT", "category": "أمان وإنذار", "name": "لوحة إنذار حريق", "quantity": 1, "status": "يعمل بحالة جيدة", "pm_period": 6, "next_pm": "2027-04-15"}, {"code": "BGC-AST-056", "apartment": "شقة 2", "office": "المطبخ", "category": "إضاءة", "name": "سبوتات", "quantity": 10, "status": "يعمل بحالة جيدة", "pm_period": 12, "next_pm": "2027-10-15"}, {"code": "BGC-AST-057", "apartment": "شقة 2", "office": "المطبخ", "category": "أمان وإنذار", "name": "حساس حرارة", "quantity": 1, "status": "يعمل بحالة جيدة", "pm_period": 6, "next_pm": "2027-04-15"}, {"code": "BGC-AST-058", "apartment": "شقة 2", "office": "مكتب أستاذة هناء", "category": "إضاءة", "name": "خط ليد", "quantity": 2, "status": "يعمل بحالة جيدة", "pm_period": 12, "next_pm": "2027-10-15"}, {"code": "BGC-AST-059", "apartment": "شقة 2", "office": "مكتب أستاذة هناء", "category": "أمان وإنذار", "name": "حساس", "quantity": 1, "status": "يعمل بحالة جيدة", "pm_period": 6, "next_pm": "2027-04-15"}, {"code": "BGC-AST-060", "apartment": "شقة 2", "office": "مكتب أستاذة هناء", "category": "إضاءة", "name": "سبوتات", "quantity": 4, "status": "يعمل بحالة جيدة", "pm_period": 12, "next_pm": "2027-10-15"}, {"code": "BGC-AST-061", "apartment": "شقة 2", "office": "مكتب أستاذة هناء", "category": "إضاءة", "name": "دلاية", "quantity": 1, "status": "يعمل بحالة جيدة", "pm_period": 12, "next_pm": "2027-10-15"}, {"code": "BGC-AST-062", "apartment": "شقة 2", "office": "مكتب مهندس صلاح", "category": "إضاءة", "name": "سبوتات", "quantity": 18, "status": "يعمل بحالة جيدة", "pm_period": 12, "next_pm": "2027-10-15"}, {"code": "BGC-AST-063", "apartment": "شقة 2", "office": "مكتب مهندس صلاح", "category": "إضاءة", "name": "نجفة", "quantity": 2, "status": "يعمل بحالة جيدة", "pm_period": 12, "next_pm": "2027-10-15"}, {"code": "BGC-AST-064", "apartment": "شقة 2", "office": "مكتب مهندس صلاح", "category": "أمان وإنذار", "name": "حساس", "quantity": 2, "status": "يعمل بحالة جيدة", "pm_period": 6, "next_pm": "2027-04-15"}, {"code": "BGC-AST-065", "apartment": "شقة 2", "office": "مكتب مهندس صلاح", "category": "تكييف", "name": "تكييف 3 حصان", "quantity": 2, "status": "يعمل بحالة جيدة", "pm_period": 3, "next_pm": "2027-01-15"}, {"code": "BGC-AST-066", "apartment": "شقة 3", "office": "عام", "category": "لوحات كهرباء", "name": "لوحة كهرباء 36 خط", "quantity": 1, "status": "يعمل بحالة جيدة", "pm_period": 6, "next_pm": "2027-04-15"}, {"code": "BGC-AST-067", "apartment": "شقة 3", "office": "مكتب المشتريات", "category": "إضاءة", "name": "سبوتات", "quantity": 12, "status": "يعمل بحالة جيدة", "pm_period": 12, "next_pm": "2027-10-15"}, {"code": "BGC-AST-068", "apartment": "شقة 3", "office": "مكتب المشتريات", "category": "إضاءة", "name": "نجفة", "quantity": 1, "status": "يعمل بحالة جيدة", "pm_period": 12, "next_pm": "2027-10-15"}, {"code": "BGC-AST-069", "apartment": "شقة 3", "office": "مكتب المشتريات", "category": "إضاءة", "name": "دلاية", "quantity": 1, "status": "يعمل بحالة جيدة", "pm_period": 12, "next_pm": "2027-10-15"}, {"code": "BGC-AST-070", "apartment": "شقة 3", "office": "مكتب المشتريات", "category": "أمان وإنذار", "name": "حساس", "quantity": 1, "status": "يعمل بحالة جيدة", "pm_period": 6, "next_pm": "2027-04-15"}, {"code": "BGC-AST-071", "apartment": "شقة 3", "office": "مكتب المشتريات", "category": "تكييف", "name": "تكييف 2.25 حصان", "quantity": 1, "status": "يعمل بحالة جيدة", "pm_period": 3, "next_pm": "2027-01-15"}, {"code": "BGC-AST-072", "apartment": "شقة 3", "office": "الطرقة", "category": "إضاءة", "name": "سبوتات", "quantity": 12, "status": "يعمل بحالة جيدة", "pm_period": 12, "next_pm": "2027-10-15"}, {"code": "BGC-AST-073", "apartment": "شقة 3", "office": "الطرقة", "category": "أمان وإنذار", "name": "حساس", "quantity": 2, "status": "يعمل بحالة جيدة", "pm_period": 6, "next_pm": "2027-04-15"}, {"code": "BGC-AST-074", "apartment": "شقة 3", "office": "الطرقة", "category": "أمان وإنذار", "name": "كاميرا", "quantity": 2, "status": "يعمل بحالة جيدة", "pm_period": 6, "next_pm": "2027-04-15"}, {"code": "BGC-AST-075", "apartment": "شقة 3", "office": "مكتب دكتور أشرف", "category": "إضاءة", "name": "سبوتات", "quantity": 6, "status": "يعمل بحالة جيدة", "pm_period": 12, "next_pm": "2027-10-15"}, {"code": "BGC-AST-076", "apartment": "شقة 3", "office": "مكتب دكتور أشرف", "category": "إضاءة", "name": "نجفة", "quantity": 1, "status": "يعمل بحالة جيدة", "pm_period": 12, "next_pm": "2027-10-15"}, {"code": "BGC-AST-077", "apartment": "شقة 3", "office": "مكتب دكتور أشرف", "category": "أمان وإنذار", "name": "حساس", "quantity": 1, "status": "يعمل بحالة جيدة", "pm_period": 6, "next_pm": "2027-04-15"}, {"code": "BGC-AST-078", "apartment": "شقة 3", "office": "مكتب دكتور أشرف", "category": "تكييف", "name": "تكييف 2.25 حصان", "quantity": 1, "status": "يعمل بحالة جيدة", "pm_period": 3, "next_pm": "2027-01-15"}, {"code": "BGC-AST-079", "apartment": "شقة 3", "office": "حمام الطرقة", "category": "إضاءة", "name": "سبوتات", "quantity": 6, "status": "يعمل بحالة جيدة", "pm_period": 12, "next_pm": "2027-10-15"}, {"code": "BGC-AST-080", "apartment": "شقة 3", "office": "حمام الطرقة", "category": "إضاءة", "name": "ليد", "quantity": 1, "status": "يعمل بحالة جيدة", "pm_period": 12, "next_pm": "2027-10-15"}, {"code": "BGC-AST-081", "apartment": "شقة 3", "office": "مكتب أستاذ عبد الرحمن", "category": "إضاءة", "name": "سبوتات", "quantity": 8, "status": "يعمل بحالة جيدة", "pm_period": 12, "next_pm": "2027-10-15"}, {"code": "BGC-AST-082", "apartment": "شقة 3", "office": "مكتب أستاذ عبد الرحمن", "category": "إضاءة", "name": "نجفة", "quantity": 1, "status": "يعمل بحالة جيدة", "pm_period": 12, "next_pm": "2027-10-15"}, {"code": "BGC-AST-083", "apartment": "شقة 3", "office": "مكتب أستاذ عبد الرحمن", "category": "أمان وإنذار", "name": "حساس", "quantity": 1, "status": "يعمل بحالة جيدة", "pm_period": 6, "next_pm": "2027-04-15"}, {"code": "BGC-AST-084", "apartment": "شقة 3", "office": "مكتب أستاذ عبد الرحمن", "category": "إضاءة", "name": "ليد", "quantity": 1, "status": "يعمل بحالة جيدة", "pm_period": 12, "next_pm": "2027-10-15"}, {"code": "BGC-AST-085", "apartment": "شقة 3", "office": "مكتب أستاذ عبد الرحمن", "category": "تكييف", "name": "تكييف 2.25 حصان", "quantity": 1, "status": "يعمل بحالة جيدة", "pm_period": 3, "next_pm": "2027-01-15"}, {"code": "BGC-AST-086", "apartment": "شقة 3", "office": "مكتب مهندس لندراوي", "category": "إضاءة", "name": "سبوتات", "quantity": 6, "status": "يعمل بحالة جيدة", "pm_period": 12, "next_pm": "2027-10-15"}, {"code": "BGC-AST-087", "apartment": "شقة 3", "office": "مكتب مهندس لندراوي", "category": "إضاءة", "name": "نجفة", "quantity": 1, "status": "يعمل بحالة جيدة", "pm_period": 12, "next_pm": "2027-10-15"}, {"code": "BGC-AST-088", "apartment": "شقة 3", "office": "مكتب مهندس لندراوي", "category": "أمان وإنذار", "name": "حساس", "quantity": 1, "status": "يعمل بحالة جيدة", "pm_period": 6, "next_pm": "2027-04-15"}, {"code": "BGC-AST-089", "apartment": "شقة 3", "office": "مكتب مهندس لندراوي", "category": "تكييف", "name": "تكييف 2.25 حصان", "quantity": 1, "status": "يعمل بحالة جيدة", "pm_period": 3, "next_pm": "2027-01-15"}, {"code": "BGC-AST-090", "apartment": "شقة 3", "office": "طرقة م. لندراوي", "category": "إضاءة", "name": "ليد", "quantity": 2, "status": "يعمل بحالة جيدة", "pm_period": 12, "next_pm": "2027-10-15"}, {"code": "BGC-AST-091", "apartment": "شقة 3", "office": "طرقة م. لندراوي", "category": "أمان وإنذار", "name": "حساس", "quantity": 1, "status": "يعمل بحالة جيدة", "pm_period": 6, "next_pm": "2027-04-15"}, {"code": "BGC-AST-092", "apartment": "شقة 3", "office": "المطبخ", "category": "إضاءة", "name": "سبوتات", "quantity": 12, "status": "يعمل بحالة جيدة", "pm_period": 12, "next_pm": "2027-10-15"}, {"code": "BGC-AST-093", "apartment": "شقة 3", "office": "المطبخ", "category": "أمان وإنذار", "name": "حساس حرارة", "quantity": 1, "status": "يعمل بحالة جيدة", "pm_period": 6, "next_pm": "2027-04-15"}, {"code": "BGC-AST-094", "apartment": "شقة 3", "office": "مكتب مهندس باسم", "category": "إضاءة", "name": "سبوتات", "quantity": 26, "status": "يعمل بحالة جيدة", "pm_period": 12, "next_pm": "2027-10-15"}, {"code": "BGC-AST-095", "apartment": "شقة 3", "office": "مكتب مهندس باسم", "category": "إضاءة", "name": "نجفة", "quantity": 2, "status": "يعمل بحالة جيدة", "pm_period": 12, "next_pm": "2027-10-15"}, {"code": "BGC-AST-096", "apartment": "شقة 3", "office": "مكتب مهندس باسم", "category": "أمان وإنذار", "name": "حساس", "quantity": 2, "status": "يعمل بحالة جيدة", "pm_period": 6, "next_pm": "2027-04-15"}, {"code": "BGC-AST-097", "apartment": "شقة 3", "office": "مكتب مهندس باسم", "category": "أمان وإنذار", "name": "كاميرا", "quantity": 2, "status": "يعمل بحالة جيدة", "pm_period": 6, "next_pm": "2027-04-15"}, {"code": "BGC-AST-098", "apartment": "شقة 3", "office": "مكتب مهندس باسم", "category": "تكييف", "name": "تكييف 3 حصان", "quantity": 2, "status": "يعمل بحالة جيدة", "pm_period": 3, "next_pm": "2027-01-15"}, {"code": "BGC-AST-099", "apartment": "شقة 4", "office": "عام", "category": "لوحات كهرباء", "name": "لوحة كهرباء 36 خط", "quantity": 1, "status": "يعمل بحالة جيدة", "pm_period": 6, "next_pm": "2027-04-15"}, {"code": "BGC-AST-100", "apartment": "شقة 4", "office": "السكرتارية", "category": "إضاءة", "name": "سبوتات", "quantity": 3, "status": "يعمل بحالة جيدة", "pm_period": 12, "next_pm": "2027-10-15"}, {"code": "BGC-AST-101", "apartment": "شقة 4", "office": "السكرتارية", "category": "إضاءة", "name": "نجفة", "quantity": 1, "status": "يعمل بحالة جيدة", "pm_period": 12, "next_pm": "2027-10-15"}, {"code": "BGC-AST-102", "apartment": "شقة 4", "office": "السكرتارية", "category": "أمان وإنذار", "name": "كاميرا", "quantity": 1, "status": "يعمل بحالة جيدة", "pm_period": 6, "next_pm": "2027-04-15"}, {"code": "BGC-AST-103", "apartment": "شقة 4", "office": "السكرتارية", "category": "أمان وإنذار", "name": "حساس", "quantity": 1, "status": "يعمل بحالة جيدة", "pm_period": 6, "next_pm": "2027-04-15"}, {"code": "BGC-AST-104", "apartment": "شقة 4", "office": "السكرتارية", "category": "تكييف", "name": "تكييف 2.25 حصان", "quantity": 1, "status": "يعمل بحالة جيدة", "pm_period": 3, "next_pm": "2027-01-15"}, {"code": "BGC-AST-105", "apartment": "شقة 4", "office": "غرفة الاجتماعات", "category": "إضاءة", "name": "سبوتات", "quantity": 12, "status": "يعمل بحالة جيدة", "pm_period": 12, "next_pm": "2027-10-15"}, {"code": "BGC-AST-106", "apartment": "شقة 4", "office": "غرفة الاجتماعات", "category": "إضاءة", "name": "نجفة", "quantity": 4, "status": "يعمل بحالة جيدة", "pm_period": 12, "next_pm": "2027-10-15"}, {"code": "BGC-AST-107", "apartment": "شقة 4", "office": "غرفة الاجتماعات", "category": "أمان وإنذار", "name": "حساس", "quantity": 4, "status": "يعمل بحالة جيدة", "pm_period": 6, "next_pm": "2027-04-15"}, {"code": "BGC-AST-108", "apartment": "شقة 4", "office": "غرفة الاجتماعات", "category": "تكييف", "name": "تكييف 3 حصان", "quantity": 2, "status": "يعمل بحالة جيدة", "pm_period": 3, "next_pm": "2027-01-15"}, {"code": "BGC-AST-109", "apartment": "شقة 4", "office": "الحمام", "category": "إضاءة", "name": "سبوتات", "quantity": 5, "status": "يعمل بحالة جيدة", "pm_period": 12, "next_pm": "2027-10-15"}, {"code": "BGC-AST-110", "apartment": "شقة 4", "office": "الحمام", "category": "إضاءة", "name": "دلاية", "quantity": 2, "status": "يعمل بحالة جيدة", "pm_period": 12, "next_pm": "2027-10-15"}, {"code": "BGC-AST-111", "apartment": "شقة 4", "office": "الطرقة الرئيسية", "category": "إضاءة", "name": "ليد", "quantity": 3, "status": "يعمل بحالة جيدة", "pm_period": 12, "next_pm": "2027-10-15"}, {"code": "BGC-AST-112", "apartment": "شقة 4", "office": "الطرقة الرئيسية", "category": "إضاءة", "name": "سبوتات", "quantity": 8, "status": "يعمل بحالة جيدة", "pm_period": 12, "next_pm": "2027-10-15"}, {"code": "BGC-AST-113", "apartment": "شقة 4", "office": "الطرقة الرئيسية", "category": "أمان وإنذار", "name": "حساس", "quantity": 3, "status": "يعمل بحالة جيدة", "pm_period": 6, "next_pm": "2027-04-15"}, {"code": "BGC-AST-114", "apartment": "شقة 4", "office": "الطرقة الرئيسية", "category": "أمان وإنذار", "name": "كاميرا", "quantity": 3, "status": "يعمل بحالة جيدة", "pm_period": 6, "next_pm": "2027-04-15"}, {"code": "BGC-AST-115", "apartment": "شقة 4", "office": "الطرقة الرئيسية", "category": "تكييف", "name": "تكييف 2.25 حصان", "quantity": 1, "status": "يعمل بحالة جيدة", "pm_period": 3, "next_pm": "2027-01-15"}, {"code": "BGC-AST-116", "apartment": "شقة 4", "office": "مكتب مخزن أستاذة آمنة", "category": "إضاءة", "name": "سبوتات", "quantity": 8, "status": "يعمل بحالة جيدة", "pm_period": 12, "next_pm": "2027-10-15"}, {"code": "BGC-AST-117", "apartment": "شقة 4", "office": "مكتب مخزن أستاذة آمنة", "category": "إضاءة", "name": "كشاف مدور", "quantity": 2, "status": "يعمل بحالة جيدة", "pm_period": 12, "next_pm": "2027-10-15"}, {"code": "BGC-AST-118", "apartment": "شقة 4", "office": "مكتب مخزن أستاذة آمنة", "category": "أمان وإنذار", "name": "حساس", "quantity": 1, "status": "يعمل بحالة جيدة", "pm_period": 6, "next_pm": "2027-04-15"}, {"code": "BGC-AST-119", "apartment": "شقة 4", "office": "مكتب مخزن أستاذة آمنة", "category": "تكييف", "name": "تكييف 1.5 حصان", "quantity": 1, "status": "يعمل بحالة جيدة", "pm_period": 3, "next_pm": "2027-01-15"}, {"code": "BGC-AST-120", "apartment": "شقة 4", "office": "طرقة مهندس بسام", "category": "إضاءة", "name": "سبوتات", "quantity": 3, "status": "يعمل بحالة جيدة", "pm_period": 12, "next_pm": "2027-10-15"}, {"code": "BGC-AST-121", "apartment": "شقة 4", "office": "طرقة مهندس بسام", "category": "إضاءة", "name": "مسطرة ماجنتك", "quantity": 1, "status": "يعمل بحالة جيدة", "pm_period": 12, "next_pm": "2027-10-15"}, {"code": "BGC-AST-122", "apartment": "شقة 4", "office": "طرقة مهندس بسام", "category": "أمان وإنذار", "name": "حساس", "quantity": 1, "status": "يعمل بحالة جيدة", "pm_period": 6, "next_pm": "2027-04-15"}, {"code": "BGC-AST-123", "apartment": "شقة 4", "office": "المطعم", "category": "إضاءة", "name": "سبوتات", "quantity": 18, "status": "يعمل بحالة جيدة", "pm_period": 12, "next_pm": "2027-10-15"}, {"code": "BGC-AST-124", "apartment": "شقة 4", "office": "المطعم", "category": "إضاءة", "name": "ماجنتيك ليد", "quantity": 2, "status": "يعمل بحالة جيدة", "pm_period": 12, "next_pm": "2027-10-15"}, {"code": "BGC-AST-125", "apartment": "شقة 4", "office": "المطعم", "category": "أمان وإنذار", "name": "حساس", "quantity": 1, "status": "يعمل بحالة جيدة", "pm_period": 6, "next_pm": "2027-04-15"}, {"code": "BGC-AST-126", "apartment": "شقة 4", "office": "المطعم", "category": "تكييف", "name": "تكييف 2.25 حصان", "quantity": 1, "status": "يعمل بحالة جيدة", "pm_period": 3, "next_pm": "2027-01-15"}, {"code": "BGC-AST-127", "apartment": "شقة 4", "office": "مكتب مهندس بسام", "category": "إضاءة", "name": "سبوتات", "quantity": 5, "status": "يعمل بحالة جيدة", "pm_period": 12, "next_pm": "2027-10-15"}, {"code": "BGC-AST-128", "apartment": "شقة 4", "office": "مكتب مهندس بسام", "category": "إضاءة", "name": "نجفة", "quantity": 1, "status": "يعمل بحالة جيدة", "pm_period": 12, "next_pm": "2027-10-15"}, {"code": "BGC-AST-129", "apartment": "شقة 4", "office": "مكتب مهندس بسام", "category": "أمان وإنذار", "name": "حساس", "quantity": 1, "status": "يعمل بحالة جيدة", "pm_period": 6, "next_pm": "2027-04-15"}, {"code": "BGC-AST-130", "apartment": "شقة 4", "office": "مكتب مهندس بسام", "category": "تكييف", "name": "تكييف 2.25 حصان", "quantity": 1, "status": "يعمل بحالة جيدة", "pm_period": 3, "next_pm": "2027-01-15"}, {"code": "BGC-AST-131", "apartment": "شقة 4", "office": "حمام مهندس بسام", "category": "إضاءة", "name": "سبوتات", "quantity": 4, "status": "يعمل بحالة جيدة", "pm_period": 12, "next_pm": "2027-10-15"}, {"code": "BGC-AST-132", "apartment": "شقة 4", "office": "المسجد", "category": "إضاءة", "name": "سبوتات", "quantity": 12, "status": "يعمل بحالة جيدة", "pm_period": 12, "next_pm": "2027-10-15"}, {"code": "BGC-AST-133", "apartment": "شقة 4", "office": "المسجد", "category": "إضاءة", "name": "نجفة", "quantity": 1, "status": "يعمل بحالة جيدة", "pm_period": 12, "next_pm": "2027-10-15"}, {"code": "BGC-AST-134", "apartment": "شقة 4", "office": "المسجد", "category": "أمان وإنذار", "name": "حساس", "quantity": 1, "status": "يعمل بحالة جيدة", "pm_period": 6, "next_pm": "2027-04-15"}, {"code": "BGC-AST-135", "apartment": "شقة 4", "office": "المسجد", "category": "تكييف", "name": "تكييف 2.25 حصان", "quantity": 1, "status": "يعمل بحالة جيدة", "pm_period": 3, "next_pm": "2027-01-15"}, {"code": "BGC-AST-136", "apartment": "الطرقات المشتركة", "office": "طرقة أمام شقة 1 و 2", "category": "إضاءة", "name": "سبوتات", "quantity": 4, "status": "يعمل بحالة جيدة", "pm_period": 12, "next_pm": "2027-10-15"}, {"code": "BGC-AST-137", "apartment": "الطرقات المشتركة", "office": "طرقة أمام شقة 1 و 2", "category": "إضاءة", "name": "ليد ماجنتيك", "quantity": 1, "status": "يعمل بحالة جيدة", "pm_period": 12, "next_pm": "2027-10-15"}, {"code": "BGC-AST-138", "apartment": "الطرقات المشتركة", "office": "طرقة أمام شقة 1 و 2", "category": "إضاءة", "name": "ليد لوجو BGC", "quantity": 1, "status": "يعمل بحالة جيدة", "pm_period": 12, "next_pm": "2027-10-15"}, {"code": "BGC-AST-139", "apartment": "الطرقات المشتركة", "office": "طرقة أمام شقة 1 و 2", "category": "أمان وإنذار", "name": "كاميرا", "quantity": 1, "status": "يعمل بحالة جيدة", "pm_period": 6, "next_pm": "2027-04-15"}, {"code": "BGC-AST-140", "apartment": "الطرقات المشتركة", "office": "طرقة أمام شقة 3 و 4", "category": "إضاءة", "name": "سبوتات", "quantity": 4, "status": "يعمل بحالة جيدة", "pm_period": 12, "next_pm": "2027-10-15"}, {"code": "BGC-AST-141", "apartment": "الطرقات المشتركة", "office": "طرقة أمام شقة 3 و 4", "category": "إضاءة", "name": "ماجنتيك ليد", "quantity": 2, "status": "يعمل بحالة جيدة", "pm_period": 12, "next_pm": "2027-10-15"}, {"code": "BGC-AST-142", "apartment": "الطرقات المشتركة", "office": "طرقة أمام شقة 3 و 4", "category": "أمان وإنذار", "name": "كاميرا", "quantity": 1, "status": "يعمل بحالة جيدة", "pm_period": 6, "next_pm": "2027-04-15"}];
+</script>
+
+<style>
+:root {
+  /* BGC brand: red #E30613 / black #141414 / white */
+  --primary: #E30613;
+  --primary-h: #C9111A;
+  --bg: #0C0C0C;
+  --panel: #141414;
+  --panel-2: #1D1D1D;
+  --panel-3: #262626;
+  --border: #2C2C2C;
+  --text: #F5F5F5;
+  --muted: #A1A1A1;
+  --success: #22C55E;
+  --warning: #F59E0B;
+  --danger: #E30613;
+  --shadow: 0 6px 24px rgba(0,0,0,.5);
+  --f-body: 'Inter','Cairo','Segoe UI',Tahoma,Arial,sans-serif;
+  --f-head: 'Barlow Condensed','Cairo','Segoe UI',Tahoma,Arial,sans-serif;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: var(--f-body); background: var(--bg); color: var(--text); min-height: 100vh; line-height: 1.6; }
+h1,h2,h3,.kpi-value,.card-title { font-family: var(--f-head); }
+
+/* Header */
+.app-header { background: var(--panel); padding: 12px 28px 12px 130px; border-bottom: 3px solid var(--primary); display: flex; align-items: center; justify-content: space-between; gap: 16px; box-shadow: var(--shadow); position: sticky; top: 0; z-index: 100; overflow: hidden; flex-wrap: wrap; }
+.app-header::before { content: ''; position: absolute; top: 0; bottom: 0; left: 0; width: 110px; background: var(--primary); clip-path: polygon(0 0, 72% 0, 30% 100%, 0 100%); }
+.brand { display: flex; align-items: center; gap: 16px; }
+.brand img { height: 42px; width: auto; display: block; }
+.brand-sep { width: 1px; height: 34px; background: var(--border); }
+.brand-text h1 { font-size: 22px; font-weight: 700; letter-spacing: .3px; line-height: 1.2; }
+.brand-text p { font-size: 12px; color: var(--muted); font-family: var(--f-body); letter-spacing: .6px; }
+.header-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; position: relative; }
+.clock { font-size: 12px; color: var(--muted); background: var(--panel-2); padding: 6px 14px; border-radius: 20px; border: 1px solid var(--border); }
+
+/* Tabs */
+.nav-tabs { background: var(--panel); padding: 0 28px; display: flex; gap: 4px; border-bottom: 1px solid var(--border); overflow-x: auto; }
+.nav-tab { padding: 14px 22px; background: transparent; border: none; color: var(--muted); cursor: pointer; font-size: 14px; font-weight: 600; font-family: inherit; border-bottom: 3px solid transparent; transition: all .2s; white-space: nowrap; }
+.nav-tab:hover { color: var(--text); background: var(--panel-2); }
+.nav-tab.active { color: #fff; border-bottom-color: var(--primary); background: var(--panel-2); }
+
+main { padding: 28px; max-width: 1600px; margin: 0 auto; }
+.page { display: none; }
+.page.active { display: block; animation: fadeIn .25s ease; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+.page-title { font-size: 26px; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; font-weight: 700; }
+.page-title .badge { font-family: var(--f-body); font-size: 12px; padding: 3px 10px; background: var(--primary); color: #fff; border-radius: 12px; font-weight: 600; }
+
+/* KPI */
+.kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px; }
+.kpi-card { background: var(--panel); padding: 18px 20px; border-radius: 10px; border: 1px solid var(--border); position: relative; overflow: hidden; transition: transform .2s, border-color .2s; }
+.kpi-card.link { cursor: pointer; }
+.kpi-card.link:hover { transform: translateY(-3px); border-color: var(--primary); }
+.kpi-card::before { content: ''; position: absolute; top: 0; right: 0; left: 0; height: 4px; background: #555; }
+.kpi-card.red::before { background: var(--primary); }
+.kpi-card.success::before { background: var(--success); }
+.kpi-card.warning::before { background: var(--warning); }
+.kpi-label { font-size: 13px; color: var(--muted); margin-bottom: 6px; }
+.kpi-value { font-size: 40px; font-weight: 700; line-height: 1.1; margin-bottom: 4px; }
+.kpi-sub { font-size: 12px; color: var(--muted); }
+.kpi-icon { position: absolute; top: 16px; left: 16px; width: 38px; height: 38px; background: var(--panel-2); border-radius: 8px; display: grid; place-items: center; font-size: 18px; }
+
+/* Cards */
+.card { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 20px; margin-bottom: 20px; }
+.card-title { font-size: 18px; font-weight: 700; margin-bottom: 14px; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.card-title::before { content: ''; width: 4px; height: 18px; background: var(--primary); border-radius: 2px; margin-left: 4px; }
+.card-title > span:first-child { flex: 1; }
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+@media (max-width: 900px) { .grid-2 { grid-template-columns: 1fr; } .app-header { padding-left: 28px; } .app-header::before { width: 50px; } }
+
+/* Buttons */
+.btn { background: var(--primary); color: #fff; border: none; padding: 10px 18px; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 600; font-family: inherit; display: inline-flex; align-items: center; gap: 6px; transition: all .2s; }
+.btn:hover { background: var(--primary-h); transform: translateY(-1px); }
+.btn-success { background: #16A34A; } .btn-success:hover { background: #15803D; }
+.btn-secondary { background: var(--panel-3); border: 1px solid var(--border); } .btn-secondary:hover { background: #333; }
+.btn-outline-danger { background: transparent; border: 1px solid var(--primary); color: #ff6b72; } .btn-outline-danger:hover { background: rgba(238,24,34,.15); }
+.btn-sm { padding: 6px 12px; font-size: 12px; }
+button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+
+/* Forms */
+.form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; }
+.form-group { display: flex; flex-direction: column; gap: 6px; }
+.form-group.full { grid-column: 1 / -1; }
+.form-label { font-size: 13px; color: var(--muted); font-weight: 600; }
+.form-label .req { color: var(--primary); }
+input, select, textarea { background: var(--bg); border: 1px solid var(--border); color: var(--text); padding: 10px 12px; border-radius: 8px; font-size: 14px; font-family: inherit; transition: border-color .2s, box-shadow .2s; }
+input:focus, select:focus, textarea:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(238,24,34,.18); }
+input:disabled { opacity: .5; cursor: not-allowed; }
+textarea { resize: vertical; min-height: 80px; }
+.form-info { background: var(--panel-2); border: 1px solid var(--border); border-right: 3px solid var(--primary); border-radius: 8px; padding: 12px; font-size: 13px; color: var(--muted); margin-top: 12px; }
+.form-info strong { color: var(--text); }
+
+/* Tables */
+.table-wrap { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+.table-toolbar { padding: 14px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; background: var(--panel-2); border-bottom: 1px solid var(--border); }
+.table-toolbar input, .table-toolbar select { font-size: 13px; padding: 8px 10px; min-width: 150px; }
+.table-scroll { max-height: 640px; overflow: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+thead th { background: var(--panel-3); padding: 12px 10px; text-align: right; font-weight: 700; position: sticky; top: 0; border-bottom: 2px solid var(--primary); z-index: 1; white-space: nowrap; }
+tbody td { padding: 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
+tbody tr:hover { background: var(--panel-2); }
+tbody tr.fault { background: rgba(238,24,34,.08); }
+tbody tr.maintenance { background: rgba(245,158,11,.08); }
+code.cd { background: var(--panel-3); padding: 2px 6px; border-radius: 4px; font-size: 11px; direction: ltr; display: inline-block; }
+.nowrap { white-space: nowrap; }
+
+/* Badges & inline status select */
+.badge-status { padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; display: inline-block; }
+.badge-status.ok, .badge-status.done { background: rgba(34,197,94,.16); color: #4ADE80; }
+.badge-status.fault { background: rgba(238,24,34,.18); color: #FF6B72; }
+.badge-status.maint, .badge-status.hold { background: rgba(245,158,11,.16); color: #FBBF24; }
+.badge-status.progress { background: rgba(255,255,255,.10); color: #E5E5E5; }
+.st-select { padding: 4px 8px; font-size: 12px; font-weight: 600; border-radius: 12px; cursor: pointer; border: 1px solid transparent; }
+.st-select.done { background: rgba(34,197,94,.16); color: #4ADE80; }
+.st-select.hold { background: rgba(245,158,11,.16); color: #FBBF24; }
+.st-select.progress { background: rgba(255,255,255,.10); color: #E5E5E5; }
+.st-select option { background: var(--panel); color: var(--text); }
+
+/* Toast */
+.toast { position: fixed; bottom: 24px; right: 24px; background: var(--panel); border: 1px solid var(--border); border-right: 4px solid var(--primary); padding: 14px 20px; border-radius: 8px; box-shadow: var(--shadow); z-index: 1000; animation: slideIn .3s ease; max-width: 380px; }
+.toast.success { border-right-color: var(--success); }
+.toast.error { border-right-color: var(--primary); }
+@keyframes slideIn { from { transform: translateX(120%); } to { transform: none; } }
+
+.chart-box { position: relative; height: 280px; }
+.chart-fallback { display: grid; place-items: center; height: 100%; color: var(--muted); font-size: 13px; text-align: center; }
+
+/* Modal */
+.modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,.75); display: none; align-items: center; justify-content: center; z-index: 500; }
+.modal-backdrop.open { display: flex; }
+.modal { background: var(--panel); border: 1px solid var(--border); border-top: 4px solid var(--primary); border-radius: 12px; width: min(760px, 94vw); max-height: 92vh; overflow: auto; padding: 24px; }
+.modal h3 { margin-bottom: 16px; font-size: 22px; }
+.modal-foot { margin-top: 18px; display: flex; gap: 8px; justify-content: space-between; flex-wrap: wrap; }
+.modal-foot .grp { display: flex; gap: 8px; flex-wrap: wrap; }
+.detail-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 14px; gap: 16px; }
+.detail-row:last-child { border-bottom: none; }
+.detail-row .label { color: var(--muted); }
+.detail-row .value { font-weight: 600; text-align: left; }
+.tl { margin-top: 18px; border-top: 1px solid var(--border); padding-top: 14px; }
+.tl h4 { font-size: 14px; margin-bottom: 10px; color: var(--muted); }
+.tl-item { display: flex; gap: 12px; padding: 7px 0; font-size: 13px; border-bottom: 1px dashed var(--border); }
+.tl-item time { color: var(--muted); font-size: 11px; white-space: nowrap; min-width: 120px; }
+.link-li { cursor: pointer; color: #ff8a90; } .link-li:hover { text-decoration: underline; }
+
+.empty-state { text-align: center; padding: 40px; color: var(--muted); }
+.empty-state .icon { font-size: 44px; margin-bottom: 10px; opacity: .4; }
+.stats-row { display: flex; gap: 20px; flex-wrap: wrap; padding: 10px 14px; font-size: 13px; }
+.stats-row span { color: var(--muted); } .stats-row strong { color: var(--text); }
+.open-item { padding: 10px 4px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+.open-item small { color: var(--muted); }
+.open-item .act { display: flex; gap: 6px; align-items: center; }
+
+.app-footer { text-align: center; padding: 22px 16px 30px; color: var(--muted); font-size: 12px; border-top: 1px solid var(--border); margin-top: 10px; }
+.app-footer .tag { font-family: var(--f-head); font-size: 17px; letter-spacing: .8px; color: var(--text); margin-bottom: 4px; direction: ltr; }
+.app-footer .tag b { color: var(--primary); font-weight: 700; }
+
+@media print {
+  .nav-tabs, .app-header, .table-toolbar, .btn, .app-footer, .st-select { display: none !important; }
+  body { background: #fff; color: #000; }
+  .card, .table-wrap { background: #fff; border: 1px solid #ccc; }
+  thead th { background: #eee; color: #000; }
+}
+</style>
+</head>
+<body>
+
+<header class="app-header">
+  <div class="brand">
+    <img src="data:image/png;base64,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" alt="BGC — Albassem General Construction" />
+    <div class="brand-sep"></div>
+    <div class="brand-text">
+      <h1>نظام إدارة المرافق</h1>
+      <p>FACILITIES MANAGEMENT SYSTEM</p>
+    </div>
+  </div>
+  <div class="header-actions">
+    <span class="clock" id="clock"></span>
+    <button class="btn btn-sm btn-secondary" onclick="exportData()">💾 نسخة احتياطية</button>
+    <button class="btn btn-sm btn-secondary" onclick="document.getElementById('import-file').click()">📥 استيراد</button>
+    <input type="file" id="import-file" accept=".json,application/json" style="display:none" onchange="importData(event)" />
+    <button class="btn btn-sm btn-secondary" onclick="resetData()">🔄 إعادة تعيين</button>
+  </div>
+</header>
+
+<nav class="nav-tabs">
+  <button class="nav-tab active" data-page="dashboard">📊 لوحة المؤشرات</button>
+  <button class="nav-tab" data-page="new-ticket">➕ تسجيل بلاغ جديد</button>
+  <button class="nav-tab" data-page="tickets">📋 سجل الأعطال</button>
+  <button class="nav-tab" data-page="assets">🔧 الأصول والمعدات</button>
+  <a class="nav-tab" href="./report.html" style="display:block;text-decoration:none">📝 صفحة تسجيل البلاغات</a>
+  <a class="nav-tab" href="./assets.html" style="display:block;text-decoration:none">➕ إدارة الأصول واستيراد Excel</a>
+  <button class="nav-tab" data-page="maintenance">🛠️ الصيانات المستحقة</button>
+</nav>
+
+<main>
+
+<!-- Dashboard -->
+<section class="page active" id="page-dashboard">
+  <h2 class="page-title">لوحة المؤشرات التنفيذية <span class="badge" id="last-update"></span></h2>
+
+  <div class="kpi-grid">
+    <div class="kpi-card">
+      <div class="kpi-icon">📦</div>
+      <div class="kpi-label">إجمالي بنود الأصول</div>
+      <div class="kpi-value" id="kpi-assets">0</div>
+      <div class="kpi-sub">إجمالي الكميات: <span id="kpi-qty">0</span></div>
+    </div>
+    <div class="kpi-card success">
+      <div class="kpi-icon">✅</div>
+      <div class="kpi-label">نسبة الأصول السليمة</div>
+      <div class="kpi-value" id="kpi-healthy">0%</div>
+      <div class="kpi-sub"><span id="kpi-healthy-cnt">0</span> بند سليم</div>
+    </div>
+    <div class="kpi-card red link" onclick="goAssets('به عطل')" title="عرض الأصول المعطلة">
+      <div class="kpi-icon">⚠️</div>
+      <div class="kpi-label">أصول بها أعطال</div>
+      <div class="kpi-value" id="kpi-faults">0</div>
+      <div class="kpi-sub">من أصل <span id="kpi-faults-total">0</span> بند</div>
+    </div>
+    <div class="kpi-card warning link" onclick="goTickets('__open')" title="عرض البلاغات المفتوحة">
+      <div class="kpi-icon">📬</div>
+      <div class="kpi-label">بلاغات مفتوحة</div>
+      <div class="kpi-value" id="kpi-open">0</div>
+      <div class="kpi-sub">تحت الإجراء + معلق</div>
+    </div>
+    <div class="kpi-card link" onclick="goPage('maintenance')" title="عرض الصيانات المستحقة">
+      <div class="kpi-icon">🛠️</div>
+      <div class="kpi-label">صيانة وقائية مستحقة</div>
+      <div class="kpi-value" id="kpi-due">0</div>
+      <div class="kpi-sub">مستحقة أو متأخرة</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-icon">⏱️</div>
+      <div class="kpi-label">متوسط مدة إصلاح الأعطال</div>
+      <div class="kpi-value" id="kpi-avg">—</div>
+      <div class="kpi-sub">يوم (للأعطال المقفلة)</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-icon">💰</div>
+      <div class="kpi-label">تكلفة الصيانة هذا الشهر</div>
+      <div class="kpi-value" id="kpi-cost">0</div>
+      <div class="kpi-sub">جنيه مصري</div>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <div class="card"><div class="card-title"><span>توزيع الأصول حسب الفئة</span></div><div class="chart-box"><canvas id="chartCategory"></canvas></div></div>
+    <div class="card"><div class="card-title"><span>حالة الأصول</span></div><div class="chart-box"><canvas id="chartStatus"></canvas></div></div>
+  </div>
+  <div class="grid-2">
+    <div class="card"><div class="card-title"><span>البلاغات حسب الموقع</span></div><div class="chart-box"><canvas id="chartLocation"></canvas></div></div>
+    <div class="card"><div class="card-title"><span>البلاغات الشهرية (آخر 6 شهور)</span></div><div class="chart-box"><canvas id="chartMonthly"></canvas></div></div>
+  </div>
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title"><span>البلاغات المفتوحة</span> <span id="open-count" class="badge-status progress">0</span></div>
+      <div id="open-tickets-list"></div>
+    </div>
+    <div class="card">
+      <div class="card-title"><span>الصيانات الوقائية المستحقة</span> <span id="due-count" class="badge-status maint">0</span></div>
+      <div id="due-list"></div>
+    </div>
+  </div>
+</section>
+
+<!-- New ticket -->
+<section class="page" id="page-new-ticket">
+  <h2 class="page-title">تسجيل بلاغ عطل / صيانة</h2>
+  <form id="ticket-form" class="card" onsubmit="return submitTicket(event)">
+    <div class="form-grid">
+      <div class="form-group">
+        <label class="form-label">الأصل (اختر من القائمة) <span class="req">*</span></label>
+        <select id="f-asset" required onchange="updateAssetInfo()"><option value="">— اختر الأصل —</option></select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">تاريخ البلاغ</label>
+        <input type="date" id="f-date" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">نوع البلاغ <span class="req">*</span></label>
+        <select id="f-type" required>
+          <option value="">— اختر —</option>
+          <option value="عطل">عطل</option>
+          <option value="صيانة وقائية">صيانة وقائية</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">حالة البلاغ <span class="req">*</span></label>
+        <select id="f-status" required onchange="toggleResolution()">
+          <option value="تحت الإجراء">تحت الإجراء</option>
+          <option value="معلق">معلق</option>
+          <option value="تم الإصلاح">تم الإصلاح</option>
+        </select>
+      </div>
+      <div class="form-group full">
+        <label class="form-label">وصف العطل / العمل <span class="req">*</span></label>
+        <textarea id="f-description" required placeholder="مثال: التكييف لا يبرّد — يحتاج تنظيف فلاتر وشحن غاز"></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">اسم المبلغ <span class="req">*</span></label>
+        <input type="text" id="f-reporter" required placeholder="اسم من أبلغ عن العطل" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">الفني المسؤول <span class="req">*</span></label>
+        <select id="f-tech" required>
+          <option value="">— اختر —</option>
+          <option value="فني كهرباء">فني كهرباء</option>
+          <option value="فني تكييف">فني تكييف</option>
+          <option value="فني إنذار حريق">فني إنذار حريق</option>
+          <option value="مقاول خارجي">مقاول خارجي</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">تاريخ الحل</label>
+        <input type="date" id="f-resolution" disabled />
+      </div>
+      <div class="form-group">
+        <label class="form-label">قطع الغيار المستخدمة</label>
+        <input type="text" id="f-parts" placeholder="مثال: غاز فريون R410A" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">التكلفة (ج.م)</label>
+        <input type="number" id="f-cost" min="0" step="0.01" value="0" />
+      </div>
+    </div>
+    <div class="form-info" id="asset-info"><strong>اختر الأصل من القائمة</strong> لعرض تفاصيله (الشقة، الغرفة، الحالة الحالية، موعد الصيانة القادم).</div>
+    <div style="display:flex; gap:8px; margin-top:18px; flex-wrap:wrap;">
+      <button type="submit" class="btn">💾 حفظ البلاغ</button>
+      <button type="button" class="btn btn-secondary" onclick="clearForm()">🗑️ مسح النموذج</button>
+    </div>
+  </form>
+</section>
+
+<!-- Tickets -->
+<section class="page" id="page-tickets">
+  <h2 class="page-title">سجل الأعطال والبلاغات <span class="badge" id="tickets-count">0</span></h2>
+  <div class="table-wrap">
+    <div class="table-toolbar">
+      <input type="text" id="t-search" placeholder="🔍 بحث في البلاغات..." oninput="renderTickets()" />
+      <select id="t-filter-status" onchange="renderTickets()">
+        <option value="">جميع الحالات</option>
+        <option value="__open">المفتوحة (تحت الإجراء + معلق)</option>
+        <option value="تحت الإجراء">تحت الإجراء</option>
+        <option value="معلق">معلق</option>
+        <option value="تم الإصلاح">تم الإصلاح</option>
+      </select>
+      <select id="t-filter-type" onchange="renderTickets()">
+        <option value="">جميع الأنواع</option>
+        <option value="عطل">عطل</option>
+        <option value="صيانة وقائية">صيانة وقائية</option>
+      </select>
+      <select id="t-filter-loc" onchange="renderTickets()"><option value="">جميع المواقع</option></select>
+      <button class="btn btn-sm btn-secondary" onclick="exportCSV()">⬇️ تصدير Excel (CSV)</button>
+      <button class="btn btn-sm btn-secondary" onclick="window.print()">🖨️ طباعة</button>
+    </div>
+    <div class="table-scroll">
+      <table>
+        <thead><tr>
+          <th>رقم البلاغ</th><th>التاريخ</th><th>الأصل</th><th>الموقع</th><th>النوع</th><th>الوصف</th>
+          <th>المبلغ</th><th>الفني</th><th>الحالة</th><th>التكلفة</th><th>إجراءات</th>
+        </tr></thead>
+        <tbody id="tickets-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- Assets -->
+<section class="page" id="page-assets">
+  <h2 class="page-title">حصر الأصول والمعدات <span class="badge" id="assets-count">0</span></h2>
+  <div class="table-wrap">
+    <div class="table-toolbar">
+      <input type="text" id="a-search" placeholder="🔍 بحث (كود، اسم، غرفة...)" oninput="renderAssets()" />
+      <select id="a-filter-cat" onchange="renderAssets()"><option value="">جميع الفئات</option></select>
+      <select id="a-filter-loc" onchange="renderAssets()"><option value="">جميع المواقع</option></select>
+      <select id="a-filter-status" onchange="renderAssets()">
+        <option value="">جميع الحالات</option>
+        <option value="يعمل بحالة جيدة">سليم</option>
+        <option value="به عطل">به عطل</option>
+      </select>
+    </div>
+    <div class="stats-row">
+      <span>عدد النتائج: <strong id="assets-result-count">0</strong></span>
+      <span>إجمالي الكميات: <strong id="assets-result-qty">0</strong></span>
+    </div>
+    <div class="table-scroll">
+      <table>
+        <thead><tr>
+          <th>الكود</th><th>الموقع</th><th>الغرفة</th><th>الفئة</th><th>اسم الأصل</th><th>الكمية</th>
+          <th>الحالة</th><th>الدورية</th><th>الصيانة القادمة</th><th>بلاغات مفتوحة</th><th>إجراءات</th>
+        </tr></thead>
+        <tbody id="assets-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- Maintenance -->
+<section class="page" id="page-maintenance">
+  <h2 class="page-title">الصيانات الوقائية المستحقة <span class="badge" id="maint-count">0</span></h2>
+  <div class="form-info" style="margin: 0 0 16px;">
+    <strong>تعليمات:</strong> الأصول المستحقة للصيانة الوقائية (أو المتأخرة). اضغط "تنفيذ صيانة" لتسجيل بلاغ صيانة وقائية مقفل — يتم تحديث آخر صيانة والموعد القادم تلقائيًا، ولو عدّلت أو حذفت البلاغ لاحقًا بتتحدث المواعيد معاه.
+  </div>
+  <div class="table-wrap">
+    <div class="table-toolbar"><input type="text" id="m-search" placeholder="🔍 بحث..." oninput="renderMaintenance()" /></div>
+    <div class="table-scroll">
+      <table>
+        <thead><tr>
+          <th>الكود</th><th>الموقع</th><th>الغرفة</th><th>الفئة</th><th>اسم الأصل</th><th>الدورية</th>
+          <th>آخر صيانة</th><th>الموعد القادم</th><th>الحالة</th><th>إجراءات</th>
+        </tr></thead>
+        <tbody id="maint-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer class="app-footer">
+  <div class="tag">Strength in <b>Structure</b>, Power in <b>Performance</b>.</div>
+  <div>BGC — Albassem General Construction · البيانات محفوظة داخل هذا المتصفح فقط، فضّل تصدير نسخة احتياطية بشكل دوري.</div>
+</footer>
+
+<!-- Modal -->
+<div class="modal-backdrop" id="modal" onclick="if(event.target.id==='modal')closeModal()">
+  <div class="modal">
+    <h3 id="modal-title">تفاصيل</h3>
+    <div id="modal-body"></div>
+    <div class="modal-foot" id="modal-foot"></div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   CONSTANTS & HELPERS
+============================================================ */
+const STORAGE_KEY = 'bgc_fms_data_v2';
+const OLD_KEY = 'bgc_fms_data_v1';
+const ST_PROG = 'تحت الإجراء', ST_HOLD = 'معلق', ST_DONE = 'تم الإصلاح';
+const T_FAULT = 'عطل', T_PM = 'صيانة وقائية';
+const OK = 'يعمل بحالة جيدة', BAD = 'به عطل';
+const STATUSES = [ST_PROG, ST_HOLD, ST_DONE];
+const TECHS = ['فني كهرباء', 'فني تكييف', 'فني إنذار حريق', 'مقاول خارجي'];
+const CHART_COLORS = ['#E30613', '#F5F5F5', '#8C8C8C', '#F59E0B', '#4A4A4A', '#22C55E'];
+
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const pad = n => String(n).padStart(2, '0');
+const todayStr = () => { const d = new Date(); return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`; };
+const d10 = s => s ? String(s).slice(0, 10) : '';
+const num = v => Number(v || 0).toLocaleString('en-US');
+const $ = id => document.getElementById(id);
+const stClass = s => s === ST_DONE ? 'done' : (s === ST_HOLD ? 'hold' : 'progress');
+
+function addMonths(s, n) {
+  const [y, m, d] = s.split('-').map(Number);
+  const t = new Date(y, m - 1 + n, 1);
+  const last = new Date(t.getFullYear(), t.getMonth() + 1, 0).getDate();
+  t.setDate(Math.min(d, last));
+  return `${t.getFullYear()}-${pad(t.getMonth()+1)}-${pad(t.getDate())}`;
+}
+function daysBetween(a, b) { return Math.max(0, Math.round((new Date(b) - new Date(a)) / 86400000)); }
+function fmtDT(iso) {
+  try { return new Date(iso).toLocaleString('ar-EG-u-nu-latn', { dateStyle: 'short', timeStyle: 'short' }); } catch (e) { return iso; }
+}
+
+/* ============================================================
+   STATE
+============================================================ */
+let state = { assets: [], tickets: [], seq: 0 };
+let storageWarned = false;
+
+function saveState() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify({ tickets: state.tickets, seq: state.seq })); }
+  catch (e) {
+    if (!storageWarned) { storageWarned = true; toast('تنبيه: التخزين المحلي غير متاح — صدّر نسخة احتياطية حتى لا تضيع البلاغات', 'error'); }
+  }
+}
+
+function normalizeTicket(t) {
+  t.date = d10(t.date) || todayStr();
+  t.resolution_date = d10(t.resolution_date) || null;
+  t.cost = Number(t.cost) || 0;
+  t.duration = Number(t.duration) || 0;
+  t.notes = t.notes || '';
+  if (!Array.isArray(t.history) || !t.history.length) t.history = [{ at: new Date().toISOString(), text: 'تم تسجيل البلاغ' }];
+  return t;
+}
+
+function loadState() {
+  let tickets = null, seq = 0;
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) { const p = JSON.parse(raw); if (p && Array.isArray(p.tickets)) { tickets = p.tickets; seq = p.seq || 0; } }
+  } catch (e) {}
+  if (!tickets) {
+    // ترحيل البلاغات من النسخة القديمة (v1) مع استبعاد البلاغ التجريبي
+    try {
+      const raw = localStorage.getItem(OLD_KEY);
+      if (raw) { const p = JSON.parse(raw); if (p && Array.isArray(p.tickets)) tickets = p.tickets.filter(t => !String(t.description || '').startsWith('(مثال')); }
+    } catch (e) {}
+  }
+  state.tickets = (tickets || []).map(normalizeTicket);
+  state.seq = seq;
+  state.assets = EMBEDDED_ASSETS.map(a => Object.assign({}, a, { last_pm: null, _baseNext: d10(a.next_pm) }));
+}
+
+/* حالة الأصول وجداول الصيانة تُشتق دائمًا من البلاغات → أي تعديل/حذف ينعكس تلقائيًا */
+function deriveAssets() {
+  const ym = todayStr().slice(0, 7);
+  state.assets.forEach(a => {
+    const mine = state.tickets.filter(t => t.asset_code === a.code);
+    const openF = mine.filter(t => t.type === T_FAULT && t.status !== ST_DONE);
+    a.open_tickets = openF.length;
+    a.status = openF.length ? BAD : OK;
+    const pms = mine.filter(t => t.type === T_PM && t.status === ST_DONE && t.resolution_date).map(t => t.resolution_date).sort();
+    a.last_pm = pms.length ? pms[pms.length - 1] : null;
+    a.next_pm = a.last_pm ? addMonths(a.last_pm, a.pm_period || 12) : a._baseNext;
+    a.due = !!a.next_pm && a.next_pm.slice(0, 7) <= ym;
+  });
+}
+
+function commit(msg, type) {
+  deriveAssets();
+  saveState();
+  scheduleCloudSave();
+  renderAll();
+  if (msg) toast(msg, type || 'success');
+}
+
+/* ============================================================
+   EXPORT / IMPORT / RESET
+============================================================ */
+function download(name, content, mime) {
+  const blob = new Blob([content], { type: mime });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = name; a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 500);
+}
+function exportData() {
+  download(`bgc_fms_backup_${todayStr()}.json`, JSON.stringify({ version: 2, exported_at: new Date().toISOString(), seq: state.seq, tickets: state.tickets }, null, 2), 'application/json');
+  toast('تم تصدير النسخة الاحتياطية', 'success');
+}
+function importData(ev) {
+  const f = ev.target.files && ev.target.files[0];
+  if (!f) return;
+  const r = new FileReader();
+  r.onload = () => {
+    try {
+      const p = JSON.parse(r.result);
+      if (!p || !Array.isArray(p.tickets)) throw new Error('bad');
+      if (!confirm(`سيتم استبدال البلاغات الحالية بـ ${p.tickets.length} بلاغ من الملف. متأكد؟`)) return;
+      state.tickets = p.tickets.map(normalizeTicket);
+      state.seq = p.seq || 0;
+      commit('تم استيراد البلاغات بنجاح');
+    } catch (e) { toast('ملف غير صالح', 'error'); }
+    ev.target.value = '';
+  };
+  r.readAsText(f);
+}
+function csvCell(v) {
+  let s = String(v == null ? '' : v);
+  if (/^[=+\-@]/.test(s)) s = "'" + s;
+  return '"' + s.replace(/"/g, '""') + '"';
+}
+function exportCSV() {
+  const cols = [['ticket_no','رقم البلاغ'],['date','التاريخ'],['asset_code','كود الأصل'],['asset_name','الأصل'],['apartment','الموقع'],['office','الغرفة'],['category','الفئة'],['type','النوع'],['description','الوصف'],['reporter','المبلغ'],['technician','الفني'],['status','الحالة'],['resolution_date','تاريخ الحل'],['duration','المدة (يوم)'],['parts','قطع الغيار'],['cost','التكلفة (ج.م)']];
+  const rows = [cols.map(c => csvCell(c[1])).join(',')].concat(state.tickets.map(t => cols.map(c => csvCell(t[c[0]])).join(',')));
+  download(`bgc_tickets_${todayStr()}.csv`, '\uFEFF' + rows.join('\r\n'), 'text/csv;charset=utf-8');
+}
+function resetData() {
+  if (!confirm('سيتم حذف كل البلاغات المسجلة والعودة لحالة الأصول الأصلية. متأكد؟')) return;
+  try { localStorage.removeItem(STORAGE_KEY); localStorage.removeItem(OLD_KEY); } catch (e) {}
+  location.reload();
+}
+
+/* ============================================================
+   INIT / TABS / CLOCK
+============================================================ */
+// Cloud sync layer: stores shared dashboard state in Supabase. Configure credentials in supabase-config.js.
+let bgcCloud = null, cloudBusy = false, cloudTimer = null, cloudChannel = null;
+function cloudEnabled() { return !!(window.BGC_SUPABASE_URL && window.BGC_SUPABASE_ANON_KEY && window.supabase); }
+function initCloud() {
+  if (!cloudEnabled()) { console.warn('BGC cloud is not configured; using browser-local storage.'); return; }
+  bgcCloud = window.supabase.createClient(window.BGC_SUPABASE_URL, window.BGC_SUPABASE_ANON_KEY);
+  syncFromCloud(true).catch(e => { console.error(e); toast('تعذر تحميل البيانات المشتركة. راجع إعدادات Supabase.', 'error'); });
+  cloudChannel = bgcCloud.channel('bgc-dashboard-state').on('postgres_changes', {event:'*', schema:'public', table:'bgc_app_state'}, payload => {
+    if (cloudBusy) return;
+    const row = payload.new;
+    if (row && row.id === 1 && row.payload) applyCloudPayload(row.payload);
+  }).subscribe();
+}
+function applyCloudPayload(payload) {
+  if (!payload || !Array.isArray(payload.tickets)) return;
+  cloudBusy = true;
+  state.tickets = payload.tickets.map(t => normalizeTicket({...t}));
+  state.seq = Number(payload.seq) || 0;
+  if (Array.isArray(payload.customAssets)) {
+    const embeddedCodes = new Set(EMBEDDED_ASSETS.map(a => a.code));
+    const merged = EMBEDDED_ASSETS.map(a => ({...a, last_pm:null, _baseNext:d10(a.next_pm)}));
+    payload.customAssets.forEach(a => { if (!embeddedCodes.has(a.code)) merged.push({...a, last_pm:null, _baseNext:d10(a.next_pm)}); });
+    state.assets = merged;
+  }
+  deriveAssets(); buildAssetOptions(); buildFilters(); renderAll();
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify({tickets:state.tickets,seq:state.seq})); } catch(e) {}
+  cloudBusy = false;
+}
+async function syncFromCloud(showError=false) {
+  if (!bgcCloud) return;
+  const {data,error} = await bgcCloud.from('bgc_app_state').select('payload').eq('id',1).maybeSingle();
+  if (error) throw error;
+  if (data && data.payload) applyCloudPayload(data.payload);
+  else {
+    const payload = {tickets:state.tickets,seq:state.seq,customAssets:[]};
+    const {error:upErr} = await bgcCloud.from('bgc_app_state').upsert({id:1,payload,updated_at:new Date().toISOString()});
+    if (upErr) throw upErr;
+  }
+}
+function scheduleCloudSave() {
+  if (!bgcCloud || cloudBusy) return;
+  clearTimeout(cloudTimer);
+  cloudTimer = setTimeout(async () => {
+    const payload = {tickets:state.tickets,seq:state.seq,customAssets:state.assets.filter(a => !EMBEDDED_ASSETS.some(e=>e.code===a.code)).map(a=>({code:a.code,apartment:a.apartment||'',office:a.office||'',category:a.category||'',name:a.name||'',quantity:Number(a.quantity)||1,status:a.status||OK,pm_period:Number(a.pm_period)||12,next_pm:a.next_pm||''}))};
+    const {error} = await bgcCloud.from('bgc_app_state').upsert({id:1,payload,updated_at:new Date().toISOString()});
+    if (error) { console.error(error); toast('فشل حفظ التغييرات على الخادم؛ البيانات المحلية لم تُحذف.', 'error'); }
+  }, 350);
+}
+
+function init() {
+  loadState();
+  deriveAssets();
+  buildAssetOptions();
+  buildFilters();
+  bindTabs();
+  $('f-date').value = todayStr();
+  renderAll();
+  initCloud();
+  startClock();
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+}
+function currentPage() { const t = document.querySelector('.nav-tab.active'); return t ? t.dataset.page : 'dashboard'; }
+function bindTabs() {
+  document.querySelectorAll('.nav-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      tab.classList.add('active');
+      $('page-' + tab.dataset.page).classList.add('active');
+      renderAll();
+      window.scrollTo({ top: 0 });
+    });
+  });
+}
+function goPage(p) { const t = document.querySelector(`[data-page="${p}"]`); if (t) t.click(); }
+function goTickets(status) { $('t-filter-status').value = status || ''; $('t-search').value = ''; $('t-filter-type').value = ''; $('t-filter-loc').value = ''; goPage('tickets'); }
+function goAssets(status) { $('a-filter-status').value = status || ''; goPage('assets'); }
+function startClock() {
+  const update = () => {
+    $('clock').textContent = '🕐 ' + new Date().toLocaleString('ar-EG-u-nu-latn', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+  };
+  update(); setInterval(update, 60000);
+}
+
+/* ============================================================
+   FORM OPTIONS
+============================================================ */
+function buildAssetOptions() {
+  const sel = $('f-asset'); const cur = sel.value;
+  sel.innerHTML = '<option value="">— اختر الأصل —</option>' +
+    state.assets.slice().sort((a, b) => a.code.localeCompare(b.code))
+      .map(a => `<option value="${esc(a.code)}">${esc(a.code)} — ${esc(a.name)} (${esc(a.apartment)} / ${esc(a.office)})</option>`).join('');
+  sel.value = cur;
+}
+function buildFilters() {
+  const locs = [...new Set(state.assets.map(a => a.apartment).filter(Boolean))];
+  const cats = [...new Set(state.assets.map(a => a.category).filter(Boolean))];
+  const lo = '<option value="">جميع المواقع</option>' + locs.map(l => `<option value="${esc(l)}">${esc(l)}</option>`).join('');
+  $('t-filter-loc').innerHTML = lo; $('a-filter-loc').innerHTML = lo;
+  $('a-filter-cat').innerHTML = '<option value="">جميع الفئات</option>' + cats.map(c => `<option value="${esc(c)}">${esc(c)}</option>`).join('');
+}
+function updateAssetInfo() {
+  const code = $('f-asset').value, info = $('asset-info');
+  if (!code) { info.innerHTML = '<strong>اختر الأصل من القائمة</strong> لعرض تفاصيله.'; return; }
+  const a = state.assets.find(x => x.code === code);
+  if (!a) { info.textContent = 'الأصل غير موجود'; return; }
+  const row = (l, v, c) => `<div><span style="color:var(--muted)">${l}:</span> <strong${c ? ` style="color:${c}"` : ''}>${v}</strong></div>`;
+  info.innerHTML = `<div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px;">
+    ${row('الكود', esc(a.code))}${row('الشقة', esc(a.apartment))}${row('الغرفة', esc(a.office))}${row('الفئة', esc(a.category))}
+    ${row('الكمية', a.quantity || 1)}${row('الحالة الحالية', esc(a.status), a.status === BAD ? '#FF6B72' : '#4ADE80')}
+    ${row('دورية الصيانة', a.pm_period + ' شهر')}${row('موعد الصيانة القادم', esc(a.next_pm || '—'))}
+    ${row('بلاغات مفتوحة', a.open_tickets || 0)}</div>`;
+}
+function toggleResolution() {
+  const st = $('f-status').value, r = $('f-resolution');
+  r.disabled = st !== ST_DONE;
+  if (st === ST_DONE && !r.value) r.value = todayStr();
+  if (st !== ST_DONE) r.value = '';
+}
+
+/* ============================================================
+   CREATE TICKET
+============================================================ */
+function nextNo() {
+  const mx = state.tickets.reduce((m, t) => Math.max(m, parseInt(String(t.ticket_no).replace(/\D/g, ''), 10) || 0), 0);
+  state.seq = Math.max(state.seq, mx) + 1;
+  return 'TKT-' + String(state.seq).padStart(4, '0');
+}
+function buildTicket(asset, f) {
+  const done = f.status === ST_DONE;
+  return normalizeTicket({
+    ticket_no: nextNo(), date: f.date, asset_code: asset.code, apartment: asset.apartment || '', office: asset.office || '',
+    category: asset.category || '', asset_name: asset.name || '', type: f.type, description: f.description, reporter: f.reporter,
+    technician: f.technician, resolution_date: done ? f.resolution : null, status: f.status, parts: f.parts || '', cost: f.cost || 0,
+    duration: done && f.resolution ? daysBetween(f.date, f.resolution) : 0,
+    history: [{ at: new Date().toISOString(), text: 'تم تسجيل البلاغ — الحالة: ' + f.status }]
+  });
+}
+function submitTicket(ev) {
+  ev.preventDefault();
+  const code = $('f-asset').value;
+  if (!code) { toast('اختر الأصل من القائمة أولاً', 'error'); return false; }
+  const f = {
+    type: $('f-type').value, description: $('f-description').value.trim(), status: $('f-status').value,
+    reporter: $('f-reporter').value.trim(), technician: $('f-tech').value, resolution: $('f-resolution').value,
+    date: $('f-date').value || todayStr(), parts: $('f-parts').value.trim(), cost: parseFloat($('f-cost').value) || 0
+  };
+  if (!f.type) { toast('اختر نوع البلاغ', 'error'); return false; }
+  if (!f.description) { toast('اكتب وصف العطل أو العمل', 'error'); return false; }
+  if (!f.reporter) { toast('اكتب اسم المبلغ', 'error'); return false; }
+  if (!f.technician) { toast('اختر الفني المسؤول', 'error'); return false; }
+  if (f.status === ST_DONE && !f.resolution) { toast('حالة (تم الإصلاح) تتطلب تاريخ حل', 'error'); return false; }
+  if (f.resolution && f.resolution < f.date) { toast('تاريخ الحل لا يمكن أن يسبق تاريخ البلاغ', 'error'); return false; }
+  const asset = state.assets.find(a => a.code === code);
+  if (!asset) { toast('الأصل غير موجود', 'error'); return false; }
+
+  const t = buildTicket(asset, f);
+  state.tickets.push(t);
+  clearForm();
+  commit(`✅ تم حفظ البلاغ برقم: ${t.ticket_no}`);
+  setTimeout(() => goTickets(''), 500);
+  return false;
+}
+function clearForm() {
+  $('ticket-form').reset();
+  $('f-date').value = todayStr();
+  $('f-cost').value = 0;
+  $('f-resolution').disabled = true;
+  $('asset-info').innerHTML = '<strong>اختر الأصل من القائمة</strong> لعرض تفاصيله.';
+}
+
+/* ============================================================
+   EDIT TICKET (modal) + QUICK STATUS
+============================================================ */
+function openModal(title, body, foot) {
+  $('modal-title').textContent = title;
+  $('modal-body').innerHTML = body;
+  $('modal-foot').innerHTML = foot || '<button class="btn btn-secondary" onclick="closeModal()">إغلاق</button>';
+  $('modal').classList.add('open');
+}
+function closeModal() { $('modal').classList.remove('open'); }
+
+function historyHtml(t) {
+  const items = (t.history || []).slice().reverse().map(h => `<div class="tl-item"><time>${esc(fmtDT(h.at))}</time><span>${esc(h.text)}</span></div>`).join('');
+  return `<div class="tl"><h4>سجل التحديثات</h4>${items || '<div class="empty-state" style="padding:10px">لا يوجد سجل</div>'}</div>`;
+}
+
+function openTicket(no) {
+  const t = state.tickets.find(x => x.ticket_no === no);
+  if (!t) return;
+  const techs = [...new Set(TECHS.concat(t.technician).filter(Boolean))];
+  const body = `
+    <div class="form-info" style="margin:0 0 14px"><strong>${esc(t.asset_name)}</strong> — <code class="cd">${esc(t.asset_code)}</code><br>${esc(t.apartment)} / ${esc(t.office)} · ${esc(t.category)}</div>
+    <div class="form-grid">
+      <div class="form-group"><label class="form-label">الحالة</label>
+        <select id="e-status" onchange="editToggleRes()">${STATUSES.map(s => `<option ${s === t.status ? 'selected' : ''}>${s}</option>`).join('')}</select></div>
+      <div class="form-group"><label class="form-label">النوع</label>
+        <select id="e-type">${[T_FAULT, T_PM].map(s => `<option ${s === t.type ? 'selected' : ''}>${s}</option>`).join('')}</select></div>
+      <div class="form-group"><label class="form-label">تاريخ البلاغ</label><input type="date" id="e-date" value="${esc(t.date)}" onchange="editToggleRes()" /></div>
+      <div class="form-group"><label class="form-label">تاريخ الحل</label><input type="date" id="e-resolution" value="${esc(t.resolution_date || '')}" ${t.status === ST_DONE ? '' : 'disabled'} /></div>
+      <div class="form-group"><label class="form-label">الفني المسؤول</label>
+        <select id="e-tech">${techs.map(s => `<option ${s === t.technician ? 'selected' : ''}>${esc(s)}</option>`).join('')}</select></div>
+      <div class="form-group"><label class="form-label">اسم المبلغ</label><input type="text" id="e-reporter" value="${esc(t.reporter)}" /></div>
+      <div class="form-group full"><label class="form-label">وصف العطل / العمل</label><textarea id="e-description">${esc(t.description)}</textarea></div>
+      <div class="form-group"><label class="form-label">قطع الغيار المستخدمة</label><input type="text" id="e-parts" value="${esc(t.parts)}" /></div>
+      <div class="form-group"><label class="form-label">التكلفة (ج.م)</label><input type="number" id="e-cost" min="0" step="0.01" value="${esc(t.cost)}" /></div>
+      <div class="form-group full"><label class="form-label">ملاحظة التحديث (تُسجل في السجل)</label><input type="text" id="e-note" placeholder="مثال: تم توريد القطعة وجاري التركيب" /></div>
+    </div>
+    ${historyHtml(t)}`;
+  const foot = `
+    <div class="grp"><button class="btn" onclick="saveTicketEdit('${esc(no)}')">💾 حفظ التعديلات</button>
+    <button class="btn btn-success" onclick="editCloseNow()">✅ إقفال اليوم</button></div>
+    <div class="grp"><button class="btn btn-outline-danger" onclick="deleteTicket('${esc(no)}')">🗑️ حذف</button>
+    <button class="btn btn-secondary" onclick="closeModal()">إغلاق</button></div>`;
+  openModal(`✏️ تعديل البلاغ ${t.ticket_no}`, body, foot);
+}
+function editToggleRes() {
+  const st = $('e-status').value, r = $('e-resolution');
+  r.disabled = st !== ST_DONE;
+  if (st === ST_DONE && !r.value) { const d = todayStr(), dt = $('e-date').value; r.value = dt && dt > d ? dt : d; }
+  if (st !== ST_DONE) r.value = '';
+}
+function editCloseNow() { $('e-status').value = ST_DONE; $('e-resolution').value = ''; editToggleRes(); }
+
+function saveTicketEdit(no) {
+  const t = state.tickets.find(x => x.ticket_no === no);
+  if (!t) return;
+  const v = id => $(id).value.trim();
+  const n = {
+    status: v('e-status'), type: v('e-type'), date: v('e-date'), resolution_date: v('e-resolution') || null,
+    technician: v('e-tech'), reporter: v('e-reporter'), description: v('e-description'), parts: v('e-parts'),
+    cost: parseFloat($('e-cost').value) || 0
+  };
+  const note = v('e-note');
+  if (!n.date) { toast('تاريخ البلاغ مطلوب', 'error'); return; }
+  if (!n.description) { toast('وصف العطل مطلوب', 'error'); return; }
+  if (!n.reporter) { toast('اسم المبلغ مطلوب', 'error'); return; }
+  if (n.status === ST_DONE && !n.resolution_date) { toast('حالة (تم الإصلاح) تتطلب تاريخ حل', 'error'); return; }
+  if (n.resolution_date && n.resolution_date < n.date) { toast('تاريخ الحل لا يمكن أن يسبق تاريخ البلاغ', 'error'); return; }
+  if (n.status !== ST_DONE) n.resolution_date = null;
+
+  const labels = { status: 'الحالة', type: 'النوع', date: 'تاريخ البلاغ', resolution_date: 'تاريخ الحل', technician: 'الفني', reporter: 'المبلغ', parts: 'قطع الغيار', cost: 'التكلفة' };
+  const changes = [];
+  Object.keys(labels).forEach(k => {
+    const a = t[k] == null ? '' : t[k], b = n[k] == null ? '' : n[k];
+    if (String(a) !== String(b)) changes.push(`${labels[k]}: ${a === '' ? '—' : a} ← ${b === '' ? '—' : b}`);
+  });
+  if (t.description !== n.description) changes.push('تم تعديل الوصف');
+  if (t.status === ST_DONE && n.status !== ST_DONE) changes.unshift('إعادة فتح البلاغ');
+  if (!changes.length && !note) { toast('لا توجد تغييرات للحفظ', 'error'); return; }
+
+  Object.assign(t, n);
+  t.duration = t.status === ST_DONE ? daysBetween(t.date, t.resolution_date) : 0;
+  t.history.push({ at: new Date().toISOString(), text: changes.concat(note ? [`ملاحظة: ${note}`] : []).join(' | ') });
+  closeModal();
+  commit(`✅ تم تحديث البلاغ ${no}`);
+}
+
+function quickStatus(no, val) {
+  const t = state.tickets.find(x => x.ticket_no === no);
+  if (!t || t.status === val) return;
+  const old = t.status;
+  t.status = val;
+  if (val === ST_DONE) {
+    const d = todayStr();
+    t.resolution_date = t.date > d ? t.date : d;
+    t.duration = daysBetween(t.date, t.resolution_date);
+  } else { t.resolution_date = null; t.duration = 0; }
+  t.history.push({ at: new Date().toISOString(), text: `الحالة: ${old} ← ${val} (تعديل سريع)` + (val === ST_DONE ? ` | تاريخ الحل: ${t.resolution_date}` : '') });
+  commit(`تم تحديث ${no}: ${val}`);
+}
+function statusSelect(t) {
+  return `<select class="st-select ${stClass(t.status)}" onchange="quickStatus('${esc(t.ticket_no)}', this.value)" title="تغيير الحالة">${STATUSES.map(s => `<option ${s === t.status ? 'selected' : ''}>${s}</option>`).join('')}</select>`;
+}
+function deleteTicket(no) {
+  if (!confirm('هل تريد حذف البلاغ ' + no + '؟ لا يمكن التراجع.')) return;
+  state.tickets = state.tickets.filter(t => t.ticket_no !== no);
+  closeModal();
+  commit('تم حذف البلاغ');
+}
+
+/* ============================================================
+   TICKETS LIST
+============================================================ */
+function renderTickets() {
+  const q = ($('t-search').value || '').toLowerCase(), fs = $('t-filter-status').value, ft = $('t-filter-type').value, fl = $('t-filter-loc').value;
+  let list = state.tickets.slice().sort((a, b) => (b.ticket_no || '').localeCompare(a.ticket_no || ''));
+  if (q) list = list.filter(t => [t.ticket_no, t.asset_name, t.asset_code, t.description, t.reporter, t.technician].some(x => (x || '').toLowerCase().includes(q)));
+  if (fs === '__open') list = list.filter(t => t.status !== ST_DONE); else if (fs) list = list.filter(t => t.status === fs);
+  if (ft) list = list.filter(t => t.type === ft);
+  if (fl) list = list.filter(t => t.apartment === fl);
+  $('tickets-count').textContent = list.length;
+  const tb = $('tickets-tbody');
+  if (!list.length) { tb.innerHTML = `<tr><td colspan="11"><div class="empty-state"><div class="icon">📭</div>لا توجد بلاغات مطابقة</div></td></tr>`; return; }
+  tb.innerHTML = list.map(t => `
+    <tr>
+      <td class="nowrap"><strong>${esc(t.ticket_no)}</strong></td>
+      <td class="nowrap">${esc(t.date)}</td>
+      <td><code class="cd">${esc(t.asset_code)}</code><br><small>${esc(t.asset_name)}</small></td>
+      <td>${esc(t.apartment)}<br><small style="color:var(--muted)">${esc(t.office)}</small></td>
+      <td class="nowrap">${t.type === T_PM ? '🛠️' : '⚠️'} ${esc(t.type)}</td>
+      <td style="max-width:240px; white-space:normal;">${esc(t.description)}</td>
+      <td>${esc(t.reporter)}</td>
+      <td>${esc(t.technician)}</td>
+      <td>${statusSelect(t)}${t.resolution_date ? `<br><small style="color:var(--muted)">حُل: ${esc(t.resolution_date)}</small>` : ''}</td>
+      <td class="nowrap">${num(t.cost)} ج.م</td>
+      <td class="nowrap"><button class="btn btn-sm" onclick="openTicket('${esc(t.ticket_no)}')">✏️ تعديل</button></td>
+    </tr>`).join('');
+}
+
+/* ============================================================
+   ASSETS LIST
+============================================================ */
+function renderAssets() {
+  const q = ($('a-search').value || '').toLowerCase(), fc = $('a-filter-cat').value, fl = $('a-filter-loc').value, fs = $('a-filter-status').value;
+  let list = state.assets.slice();
+  if (q) list = list.filter(a => [a.code, a.name, a.office, a.apartment, a.category].some(x => (x || '').toLowerCase().includes(q)));
+  if (fc) list = list.filter(a => a.category === fc);
+  if (fl) list = list.filter(a => a.apartment === fl);
+  if (fs) list = list.filter(a => a.status === fs);
+  $('assets-count').textContent = state.assets.length;
+  $('assets-result-count').textContent = list.length;
+  $('assets-result-qty').textContent = list.reduce((s, a) => s + (a.quantity || 0), 0);
+  const tb = $('assets-tbody');
+  if (!list.length) { tb.innerHTML = `<tr><td colspan="11"><div class="empty-state"><div class="icon">🔍</div>لا توجد أصول مطابقة</div></td></tr>`; return; }
+  tb.innerHTML = list.sort((a, b) => a.code.localeCompare(b.code)).map(a => `
+    <tr class="${a.status === BAD ? 'fault' : ''}">
+      <td><code class="cd">${esc(a.code)}</code></td>
+      <td>${esc(a.apartment)}</td><td>${esc(a.office)}</td><td>${esc(a.category)}</td>
+      <td>${a.due ? '<span class="badge-status maint" style="margin-left:4px">مستحق</span>' : ''}${esc(a.name)}</td>
+      <td>${a.quantity || 1}</td>
+      <td><span class="badge-status ${a.status === BAD ? 'fault' : 'ok'}">${esc(a.status)}</span></td>
+      <td>${a.pm_period || 0} شهر</td>
+      <td class="nowrap">${esc(a.next_pm || '—')}</td>
+      <td>${a.open_tickets > 0 ? `<span class="badge-status fault">${a.open_tickets}</span>` : '—'}</td>
+      <td class="nowrap"><button class="btn btn-sm" onclick="quickTicket('${esc(a.code)}')">➕ بلاغ</button> <button class="btn btn-sm btn-secondary" onclick="showAsset('${esc(a.code)}')">👁️</button></td>
+    </tr>`).join('');
+}
+function showAsset(code) {
+  const a = state.assets.find(x => x.code === code);
+  if (!a) return;
+  const tk = state.tickets.filter(t => t.asset_code === code).sort((x, y) => y.ticket_no.localeCompare(x.ticket_no));
+  const r = (l, v) => `<div class="detail-row"><span class="label">${l}</span><span class="value">${v}</span></div>`;
+  const body = r('الكود', esc(a.code)) + r('الموقع', `${esc(a.apartment)} / ${esc(a.office)}`) + r('الفئة', esc(a.category)) + r('الكمية', a.quantity || 1) +
+    r('الحالة', esc(a.status)) + r('دورية الصيانة', a.pm_period + ' شهر') + r('آخر صيانة', esc(a.last_pm || '—')) + r('الصيانة القادمة', esc(a.next_pm || '—')) +
+    r('بلاغات مفتوحة', a.open_tickets || 0) + r('إجمالي البلاغات', tk.length) +
+    (tk.length ? `<div style="margin-top:14px"><strong>البلاغات (اضغط للتعديل):</strong><ul style="margin-top:8px; padding-right:20px;">${tk.slice(0, 8).map(t => `<li class="link-li" onclick="openTicket('${esc(t.ticket_no)}')">${esc(t.ticket_no)} — ${esc(t.type)} — ${esc(t.status)} (${esc(t.date)})</li>`).join('')}</ul></div>` : '');
+  openModal(`🔧 ${a.code} — ${a.name}`, body, `<div class="grp"><button class="btn" onclick="closeModal();quickTicket('${esc(a.code)}')">➕ بلاغ جديد</button></div><div class="grp"><button class="btn btn-secondary" onclick="closeModal()">إغلاق</button></div>`);
+}
+function quickTicket(code) {
+  goPage('new-ticket');
+  setTimeout(() => { $('f-asset').value = code; updateAssetInfo(); $('f-description').focus(); }, 80);
+}
+
+/* ============================================================
+   MAINTENANCE
+============================================================ */
+function renderMaintenance() {
+  const q = ($('m-search').value || '').toLowerCase(), today = todayStr();
+  let list = state.assets.filter(a => a.due);
+  if (q) list = list.filter(a => [a.code, a.name, a.office].some(x => (x || '').toLowerCase().includes(q)));
+  $('maint-count').textContent = list.length;
+  const tb = $('maint-tbody');
+  if (!list.length) { tb.innerHTML = `<tr><td colspan="10"><div class="empty-state"><div class="icon">✨</div>لا توجد صيانات مستحقة حاليًا</div></td></tr>`; return; }
+  tb.innerHTML = list.sort((a, b) => (a.next_pm || '').localeCompare(b.next_pm || '')).map(a => {
+    const overdue = a.next_pm && a.next_pm < today;
+    return `<tr class="${overdue ? 'maintenance' : ''}">
+      <td><code class="cd">${esc(a.code)}</code></td><td>${esc(a.apartment)}</td><td>${esc(a.office)}</td><td>${esc(a.category)}</td><td>${esc(a.name)}</td>
+      <td>${a.pm_period} شهر</td><td class="nowrap">${esc(a.last_pm || '—')}</td>
+      <td class="nowrap"><strong>${esc(a.next_pm || '—')}</strong>${overdue ? ' <span class="badge-status fault">متأخر</span>' : ''}</td>
+      <td><span class="badge-status ${a.status === BAD ? 'fault' : 'ok'}">${esc(a.status)}</span></td>
+      <td><button class="btn btn-sm btn-success" onclick="executePM('${esc(a.code)}')">✅ تنفيذ صيانة</button></td></tr>`;
+  }).join('');
+}
+function executePM(code) {
+  const asset = state.assets.find(a => a.code === code);
+  if (!asset) return;
+  if (!confirm(`تنفيذ صيانة وقائية لـ ${asset.name} (${asset.code}) وتسجيلها كبلاغ "تم الإصلاح" اليوم؟`)) return;
+  const d = todayStr();
+  const t = buildTicket(asset, { type: T_PM, description: 'صيانة وقائية دورية', reporter: 'فريق الصيانة', technician: 'فني الصيانة', status: ST_DONE, date: d, resolution: d, parts: '', cost: 0 });
+  state.tickets.push(t);
+  commit(`✅ تم تنفيذ الصيانة الوقائية لـ ${asset.code}`);
+}
+
+/* ============================================================
+   DASHBOARD
+============================================================ */
+let charts = {};
+function renderDashboard() {
+  const A = state.assets, T = state.tickets;
+  const healthy = A.filter(a => a.status === OK).length;
+  const faulty = A.filter(a => a.status === BAD).length;
+  const open = T.filter(t => t.status !== ST_DONE).sort((a, b) => b.ticket_no.localeCompare(a.ticket_no));
+  const dueList = A.filter(a => a.due);
+  const ym = todayStr().slice(0, 7);
+  const monthCost = T.filter(t => (t.date || '').startsWith(ym)).reduce((s, t) => s + (t.cost || 0), 0);
+  const closedF = T.filter(t => t.type === T_FAULT && t.status === ST_DONE);
+  $('kpi-assets').textContent = A.length;
+  $('kpi-qty').textContent = A.reduce((s, a) => s + (a.quantity || 0), 0);
+  $('kpi-healthy').textContent = A.length ? Math.round(healthy / A.length * 100) + '%' : '0%';
+  $('kpi-healthy-cnt').textContent = healthy;
+  $('kpi-faults').textContent = faulty;
+  $('kpi-faults-total').textContent = A.length;
+  $('kpi-open').textContent = open.length;
+  $('kpi-due').textContent = dueList.length;
+  $('kpi-avg').textContent = closedF.length ? (closedF.reduce((s, t) => s + (t.duration || 0), 0) / closedF.length).toFixed(1) : '—';
+  $('kpi-cost').textContent = num(monthCost);
+  $('last-update').textContent = 'آخر تحديث: ' + new Date().toLocaleTimeString('ar-EG-u-nu-latn', { hour: '2-digit', minute: '2-digit' });
+
+  $('open-count').textContent = open.length;
+  $('open-tickets-list').innerHTML = !open.length
+    ? '<div class="empty-state" style="padding:20px"><div class="icon">🎉</div>لا توجد بلاغات مفتوحة</div>'
+    : '<div class="table-scroll" style="max-height:320px">' + open.map(t => `
+        <div class="open-item">
+          <div><strong>${esc(t.ticket_no)}</strong> — ${esc(t.asset_name)}<br><small>${esc(t.apartment)} / ${esc(t.office)} · ${esc(t.description)}</small></div>
+          <div class="act">${statusSelect(t)}<button class="btn btn-sm btn-secondary" onclick="openTicket('${esc(t.ticket_no)}')">✏️</button></div>
+        </div>`).join('') + '</div>';
+
+  $('due-count').textContent = dueList.length;
+  $('due-list').innerHTML = !dueList.length
+    ? '<div class="empty-state" style="padding:20px"><div class="icon">✨</div>لا توجد صيانات مستحقة</div>'
+    : '<div class="table-scroll" style="max-height:320px">' + dueList.map(a => `
+        <div class="open-item">
+          <div><strong>${esc(a.code)}</strong> — ${esc(a.name)}<br><small>${esc(a.apartment)} / ${esc(a.office)} — قادم: ${esc(a.next_pm || '—')}</small></div>
+          <button class="btn btn-sm btn-success" onclick="executePM('${esc(a.code)}')">✅ تنفيذ</button>
+        </div>`).join('') + '</div>';
+  drawCharts();
+}
+
+function chartBox(id, cfg) {
+  const cv = $(id), box = cv.parentElement;
+  if (typeof Chart === 'undefined') {
+    cv.style.display = 'none';
+    if (!box.querySelector('.chart-fallback')) {
+      const fb = document.createElement('div');
+      fb.className = 'chart-fallback';
+      fb.textContent = 'تعذر تحميل مكتبة الرسوم البيانية (Chart.js) — تأكد من الاتصال بالإنترنت';
+      box.appendChild(fb);
+    }
+    return;
+  }
+  if (charts[id]) { charts[id].destroy(); delete charts[id]; }
+  charts[id] = new Chart(cv.getContext('2d'), cfg);
+}
+function drawCharts() {
+  if (typeof Chart !== 'undefined') {
+    Chart.defaults.color = '#BDBDBD';
+    Chart.defaults.font.family = "'Inter','Cairo','Segoe UI',sans-serif";
+  }
+  const A = state.assets, T = state.tickets;
+  const count = (arr, k) => arr.reduce((o, x) => (o[x[k]] = (o[x[k]] || 0) + 1, o), {});
+  const legend = { position: 'right', labels: { color: '#E5E5E5', font: { size: 12 } } };
+
+  const cat = count(A, 'category');
+  chartBox('chartCategory', { type: 'doughnut', data: { labels: Object.keys(cat), datasets: [{ data: Object.values(cat), backgroundColor: CHART_COLORS, borderColor: '#141414', borderWidth: 3 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend } } });
+
+  const stData = { 'سليم': A.filter(a => a.status === OK).length, 'به عطل': A.filter(a => a.status === BAD).length };
+  chartBox('chartStatus', { type: 'pie', data: { labels: Object.keys(stData), datasets: [{ data: Object.values(stData), backgroundColor: ['#22C55E', '#E30613'], borderColor: '#141414', borderWidth: 3 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend } } });
+
+  const locs = [...new Set(A.map(a => a.apartment))];
+  const tk = count(T, 'apartment'), openTk = count(T.filter(t => t.status !== ST_DONE), 'apartment');
+  const scales = { x: { ticks: { color: '#A1A1A1' }, grid: { color: '#2C2C2C' } }, y: { ticks: { color: '#A1A1A1', precision: 0 }, grid: { color: '#2C2C2C' }, beginAtZero: true } };
+  chartBox('chartLocation', { type: 'bar', data: { labels: locs, datasets: [
+    { label: 'إجمالي البلاغات', data: locs.map(l => tk[l] || 0), backgroundColor: '#8C8C8C', borderRadius: 6 },
+    { label: 'مفتوحة', data: locs.map(l => openTk[l] || 0), backgroundColor: '#E30613', borderRadius: 6 } ] },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#E5E5E5' } } }, scales } });
+
+  const now = new Date(), keys = [], labels = [];
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    keys.push(`${d.getFullYear()}-${pad(d.getMonth() + 1)}`);
+    labels.push(d.toLocaleDateString('ar-EG-u-nu-latn', { month: 'short', year: '2-digit' }));
+  }
+  chartBox('chartMonthly', { type: 'line', data: { labels, datasets: [{ label: 'عدد البلاغات', data: keys.map(k => T.filter(t => (t.date || '').startsWith(k)).length), borderColor: '#E30613', backgroundColor: 'rgba(238,24,34,.18)', fill: true, tension: .3, borderWidth: 2, pointBackgroundColor: '#fff', pointBorderColor: '#E30613', pointRadius: 5 }] },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#E5E5E5' } } }, scales } });
+}
+
+/* ============================================================
+   RENDER / TOAST
+============================================================ */
+function renderAll() {
+  const p = currentPage();
+  if (p === 'dashboard') renderDashboard();
+  else if (p === 'tickets') renderTickets();
+  else if (p === 'assets') renderAssets();
+  else if (p === 'maintenance') renderMaintenance();
+  else if (p === 'new-ticket') updateAssetInfo();
+}
+function toast(msg, type) {
+  const t = document.createElement('div');
+  t.className = 'toast ' + (type || '');
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => { t.style.opacity = '0'; t.style.transition = 'opacity .3s'; }, 2800);
+  setTimeout(() => t.remove(), 3200);
+}
+
+init();
+</script>
+</body>
+</html>
