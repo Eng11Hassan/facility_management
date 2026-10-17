@@ -2,18 +2,17 @@
 <html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>تسجيل بلاغ — BGC</title>
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet"><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="./supabase-config.js"></script>
 <style>:root{--red:#E30613;--black:#111;--bg:#f4f5f7;--line:#ddd}*{box-sizing:border-box}body{margin:0;background:var(--bg);font-family:Cairo,sans-serif;color:#222}.top{background:#111;color:#fff;padding:22px max(20px,calc((100% - 900px)/2));border-bottom:5px solid var(--red)}.top b{font-size:24px}.top span{color:#bbb}.wrap{max-width:900px;margin:28px auto;padding:0 16px}.card{background:white;border:1px solid var(--line);border-radius:14px;padding:24px;box-shadow:0 8px 25px #0000000b}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.field{display:flex;flex-direction:column;gap:6px}.full{grid-column:1/-1}label{font-weight:700;font-size:14px}input,select,textarea{font:inherit;padding:11px;border:1px solid #cfd2d7;border-radius:8px;background:white;width:100%}textarea{min-height:115px;resize:vertical}.btn{background:var(--red);color:white;border:0;border-radius:8px;padding:12px 20px;font:700 15px Cairo;cursor:pointer}.btn:disabled{opacity:.6;cursor:wait}.note{padding:12px;background:#fff5f5;border-right:4px solid var(--red);border-radius:6px;margin-bottom:18px}.msg{margin-top:14px;font-weight:700}.small{color:#666;font-size:13px}@media(max-width:620px){.grid{grid-template-columns:1fr}.full{grid-column:auto}.card{padding:16px}}</style></head>
-<body><header class="top"><b>BGC</b> <span>AlBassem General Contracting · تسجيل بلاغ</span></header><main class="wrap"><div class="card"><h1 style="margin-top:0">تسجيل عطل أو طلب صيانة</h1><div class="note">ابحث أو اختر الأصل من القائمة — سيتم تعبئة البيانات تلقائياً.</div>
+<body><header class="top"><b>BGC</b> <span>AlBassem General Contracting · تسجيل بلاغ</span></header><main class="wrap"><div class="card"><h1 style="margin-top:0">تسجيل عطل أو طلب صيانة</h1><div class="note">اختر الأصل من القائمة — سيتم تعبئة الموقع والغرفة والاسم تلقائياً.</div>
 <form id="reportForm"><div class="grid">
 
 <div class="field full">
-    <label for="assetSearch">بحث واختيار الأصل (الكود - الموقع - الغرفة - الاسم) *</label>
-    <input list="assetsList" id="assetSearch" placeholder="اكتب للبحث (مثال: BGC-AST أو شقة 2 أو تكييف)..." required autocomplete="off">
-    <datalist id="assetsList">
-        <!-- سيتم تعبئتها ديناميكياً من قاعدة البيانات -->
-    </datalist>
+    <label for="assetSelect">الأصل (اختر من القائمة) *</label>
+    <select id="assetSelect" required>
+        <option value="">— اختر الأصل —</option>
+    </select>
 </div>
 
-<!-- حقول مخفية للحفاظ على نفس هيكل التخزين القديم -->
+<!-- حقول مخفية لحفظ البيانات بالبنية المطلوبة -->
 <div class="field" style="display:none;"><input id="asset_code"></div>
 <div class="field" style="display:none;"><input id="asset_name"></div>
 
@@ -33,72 +32,68 @@ const $=id=>document.getElementById(id);$('date').value=new Date().toISOString()
 const configured=window.BGC_SUPABASE_URL&&!window.BGC_SUPABASE_URL.includes('PASTE_')&&window.BGC_SUPABASE_ANON_KEY&&!window.BGC_SUPABASE_ANON_KEY.includes('PASTE_')&&window.supabase;
 const db=configured?window.supabase.createClient(window.BGC_SUPABASE_URL,window.BGC_SUPABASE_ANON_KEY):null;
 
-let systemAssets = [];
+let allAssets = [];
 
-async function loadAssets() {
+async function loadAssetsDropdown() {
     try {
         if (!db) return;
         const { data, error } = await db.from('bgc_app_state').select('payload').eq('id', 1).maybeSingle();
         if (error) throw error;
         
-        // جلب الأصول سواء كانت مخزنة تحت customAssets أو assets
         const payload = data?.payload || {};
-        systemAssets = payload.customAssets || payload.assets || [];
+        allAssets = payload.customAssets || payload.assets || [];
         
-        const datalist = \$('assetsList');
-        datalist.innerHTML = '';
+        const select = \$('assetSelect');
+        select.innerHTML = '<option value="">— اختر الأصل —</option>';
         
-        systemAssets.forEach(asset => {
+        allAssets.forEach(asset => {
             const code = asset.code || '';
             const loc = asset.location || asset.apartment || 'غير محدد';
             const room = asset.room || asset.office || 'غير محدد';
             const name = asset.name || 'بدون اسم';
             
-            // التنسيق المطلوب: (الكود - الموقع - الغرفة - الاسم)
-            const displayString = `${code} — ${loc} — ${room} — ${name}`;
+            // التنسيق المطلوب تماماً: الكود - الموقع - الغرفة - اسم الأصل
+            const displayText = `${code} — ${loc} (${room}) — ${name}`;
             
             const opt = document.createElement('option');
-            opt.value = displayString;
+            opt.value = code;
+            opt.textContent = displayText;
             opt.dataset.code = code;
             opt.dataset.name = name;
             opt.dataset.apartment = loc;
             opt.dataset.office = room;
-            datalist.appendChild(opt);
+            select.appendChild(opt);
         });
     } catch (err) {
-        console.error('فشل تحميل الأصول:', err);
+        console.error('خطأ في تحميل الأصول:', err);
     }
 }
 
-// عند اختيار أو كتابة الأصل في حقل البحث الذكي
-\$('assetSearch').addEventListener('input', (e) => {
-    const val = e.target.value;
-    const options = \$('assetsList').options;
+// عند اختيار أصل من القائمة المنسدلة
+\$('assetSelect').addEventListener('change', (e) => {
+    const selectedCode = e.target.value;
+    const selectedOption = e.target.selectedOptions[0];
     
-    for (let opt of options) {
-        if (opt.value === val) {
-            // تعبئة البيانات الخفية والمرئية تلقائياً
-            \$('asset_code').value = opt.dataset.code;
-            \$('asset_name').value = opt.dataset.name;
-            \$('apartment').value = opt.dataset.apartment;
-            \$('office').value = opt.dataset.office;
-            return;
-        }
+    if (selectedOption && selectedOption.dataset.code) {
+        \$('asset_code').value = selectedOption.dataset.code;
+        \$('asset_name').value = selectedOption.dataset.name;
+        \$('apartment').value = selectedOption.dataset.apartment;
+        \$('office').value = selectedOption.dataset.office;
+    } else {
+        $('asset_code').value = '';$('asset_name').value = '';
+        $('apartment').value = '';$('office').value = '';
     }
-    // إذا كتب يدوي اعتبره اسم أصل جديد
-    \$('asset_name').value = val;
-    \$('asset_code').value = 'NEW-' + Date.now();
 });
 
-window.addEventListener('DOMContentLoaded', loadAssets);
+window.addEventListener('DOMContentLoaded', loadAssetsDropdown);
 
 \$('reportForm').addEventListener('submit',async e=>{e.preventDefault();const btn=$('submitBtn'),msg=$('message');btn.disabled=true;msg.textContent='';
 const v=id=>\$(id).value.trim();
 const ticket={
     ticket_no:'TKT-'+Date.now().toString().slice(-8),
     date:v('date'),
-    asset_code:v('asset_code') || ('AST-'+Date.now()),
-    asset_name:v('asset_name') || v('assetSearch'),
+    asset_code:v('asset_code') || \$('assetSelect').value,
+    asset_name:v('asset_name') || 'أصل عام',
     apartment:v('apartment'),
     office:v('office'),
     category:v('category'),
@@ -113,7 +108,7 @@ const ticket={
     parts:'',
     cost:0,
     duration:0,
-    history:[{at:new Date().toISOString(),text:'تم تسجيل البلاغ من صفحة البلاغات الذكية'}]
+    history:[{at:new Date().toISOString(),text:'تم تسجيل البلاغ من القائمة المنسدلة'}]
 };
 try{
     if(!db)throw new Error('لم يتم إعداد الاتصال بقاعدة البيانات بعد.');
@@ -126,7 +121,7 @@ try{
     const {error:saveError}=await db.from('bgc_app_state').upsert({id:1,payload:p,updated_at:new Date().toISOString()});
     if(saveError)throw saveError;
     $('reportForm').reset();$('date').value=new Date().toISOString().slice(0,10);
-    loadAssets();
+    loadAssetsDropdown();
     msg.style.color='green';
     msg.textContent='تم تسجيل البلاغ بنجاح. رقم البلاغ: '+ticket.ticket_no+' — سيظهر في لوحة التحكم.';
 }catch(err){
