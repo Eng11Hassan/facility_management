@@ -2,16 +2,21 @@
 <html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>تسجيل بلاغ — BGC</title>
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet"><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="./supabase-config.js"></script>
 <style>:root{--red:#E30613;--black:#111;--bg:#f4f5f7;--line:#ddd}*{box-sizing:border-box}body{margin:0;background:var(--bg);font-family:Cairo,sans-serif;color:#222}.top{background:#111;color:#fff;padding:22px max(20px,calc((100% - 900px)/2));border-bottom:5px solid var(--red)}.top b{font-size:24px}.top span{color:#bbb}.wrap{max-width:900px;margin:28px auto;padding:0 16px}.card{background:white;border:1px solid var(--line);border-radius:14px;padding:24px;box-shadow:0 8px 25px #0000000b}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.field{display:flex;flex-direction:column;gap:6px}.full{grid-column:1/-1}label{font-weight:700;font-size:14px}input,select,textarea{font:inherit;padding:11px;border:1px solid #cfd2d7;border-radius:8px;background:white;width:100%}textarea{min-height:115px;resize:vertical}.btn{background:var(--red);color:white;border:0;border-radius:8px;padding:12px 20px;font:700 15px Cairo;cursor:pointer}.btn:disabled{opacity:.6;cursor:wait}.note{padding:12px;background:#fff5f5;border-right:4px solid var(--red);border-radius:6px;margin-bottom:18px}.msg{margin-top:14px;font-weight:700}.small{color:#666;font-size:13px}@media(max-width:620px){.grid{grid-template-columns:1fr}.full{grid-column:auto}.card{padding:16px}}</style></head>
-<body><header class="top"><b>BGC</b> <span>AlBassem General Contracting · تسجيل بلاغ</span></header><main class="wrap"><div class="card"><h1 style="margin-top:0">تسجيل عطل أو طلب صيانة</h1><div class="note">بعد إرسال البلاغ بنجاح، سيظهر في لوحة التحكم الرئيسية عند إعداد قاعدة البيانات المشتركة.</div>
+<body><header class="top"><b>BGC</b> <span>AlBassem General Contracting · تسجيل بلاغ</span></header><main class="wrap"><div class="card"><h1 style="margin-top:0">تسجيل عطل أو طلب صيانة</h1><div class="note">ابحث أو اختر الأصل من القائمة — سيتم تعبئة البيانات تلقائياً.</div>
 <form id="reportForm"><div class="grid">
+
 <div class="field full">
-    <label for="asset_select">اختر الأصل / البند من القائمة *</label>
-    <select id="asset_select" required>
-        <option value="">-- اختر الأصل أو اكتب يدوياً --</option>
-    </select>
+    <label for="assetSearch">بحث واختيار الأصل (الكود - الموقع - الغرفة - الاسم) *</label>
+    <input list="assetsList" id="assetSearch" placeholder="اكتب للبحث (مثال: BGC-AST أو شقة 2 أو تكييف)..." required autocomplete="off">
+    <datalist id="assetsList">
+        <!-- سيتم تعبئتها ديناميكياً من قاعدة البيانات -->
+    </datalist>
 </div>
+
+<!-- حقول مخفية للحفاظ على نفس هيكل التخزين القديم -->
 <div class="field" style="display:none;"><input id="asset_code"></div>
 <div class="field" style="display:none;"><input id="asset_name"></div>
+
 <div class="field"><label for="apartment">المبنى / الموقع *</label><input id="apartment" required placeholder="الموقع أو الشقة"></div>
 <div class="field"><label for="office">الغرفة / الإدارة</label><input id="office" placeholder="مكان الأصل"></div>
 <div class="field"><label for="category">التصنيف</label><select id="category"><option>كهرباء</option><option>تكييف</option><option>سباكة</option><option>أثاث</option><option>أمان وإنذار</option><option>أجهزة أخرى</option><option>أخرى</option></select></div>
@@ -28,78 +33,107 @@ const $=id=>document.getElementById(id);$('date').value=new Date().toISOString()
 const configured=window.BGC_SUPABASE_URL&&!window.BGC_SUPABASE_URL.includes('PASTE_')&&window.BGC_SUPABASE_ANON_KEY&&!window.BGC_SUPABASE_ANON_KEY.includes('PASTE_')&&window.supabase;
 const db=configured?window.supabase.createClient(window.BGC_SUPABASE_URL,window.BGC_SUPABASE_ANON_KEY):null;
 
-let loadedAssets = [];
+let systemAssets = [];
 
-async function loadAssetsDropdown() {
-    const select = \$('asset_select');
+async function loadAssets() {
     try {
-        if (!db) {
-            select.innerHTML = '<option value="manual">-- الاتصال غير متوفر (أدخل البيانات يدوياً) --</option>';
-            return;
-        }
+        if (!db) return;
         const { data, error } = await db.from('bgc_app_state').select('payload').eq('id', 1).maybeSingle();
         if (error) throw error;
         
-        loadedAssets = data?.payload?.customAssets || [];
-        select.innerHTML = '<option value="">-- اختر الأصل المطلوب للصيانة --</option>';
+        // جلب الأصول سواء كانت مخزنة تحت customAssets أو assets
+        const payload = data?.payload || {};
+        systemAssets = payload.customAssets || payload.assets || [];
         
-        if (loadedAssets.length === 0) {
-            select.innerHTML = '<option value="manual">-- لا توجد أصول مسجلة بعد (اضغط هنا أو أضف من لوحة التحكم) --</option>';
-        } else {
-            loadedAssets.forEach(asset => {
-                const opt = document.createElement('option');
-                opt.value = asset.code || ('AST-' + Math.random().toString(36.substring(7)));
-                opt.textContent = `${asset.name || 'بدون اسم'} (${asset.code || 'بدون كود'}) — الموقع: ${asset.location || 'غير محدد'}`;
-                select.appendChild(opt);
-            });
-        }
-
-        // خيار للإدخال اليدوي الحر
-        const manualOpt = document.createElement('option');
-        manualOpt.value = "MANUAL_INPUT";
-        manualOpt.textContent = "+ إدخال أصل جديد أو يدوي غير مدرج بالقائمة";
-        select.appendChild(manualOpt);
-
+        const datalist = \$('assetsList');
+        datalist.innerHTML = '';
+        
+        systemAssets.forEach(asset => {
+            const code = asset.code || '';
+            const loc = asset.location || asset.apartment || 'غير محدد';
+            const room = asset.room || asset.office || 'غير محدد';
+            const name = asset.name || 'بدون اسم';
+            
+            // التنسيق المطلوب: (الكود - الموقع - الغرفة - الاسم)
+            const displayString = `${code} — ${loc} — ${room} — ${name}`;
+            
+            const opt = document.createElement('option');
+            opt.value = displayString;
+            opt.dataset.code = code;
+            opt.dataset.name = name;
+            opt.dataset.apartment = loc;
+            opt.dataset.office = room;
+            datalist.appendChild(opt);
+        });
     } catch (err) {
-        console.error('فشل في جلب الأصول:', err);
-        select.innerHTML = '<option value="manual">-- تعذر جلب الأصول (تأكد من الاتصال) --</option>';
+        console.error('فشل تحميل الأصول:', err);
     }
 }
 
-// عند اختيار أصل من القائمة
-\$('asset_select').addEventListener('change', (e) => {
-    const code = e.target.value;
-    if (code === "MANUAL_INPUT" || code === "manual") {
-        const customName = prompt("أدخل اسم الأصل أو البند:");
-        const customCode = prompt("أدخل كود الأصل (اختياري):", "BGC-AST-" + Math.floor(Math.random()*1000));
-        if (customName) {
-            $('asset_code').value = customCode \vert{}\vert{} ('NEW-' + Date.now());$('asset_name').value = customName;
-            // إضافة مؤقتة للقائمة
-            const opt = document.createElement('option');
-            opt.value = \$('asset_code').value;
-            opt.textContent = `${customName} (${$('asset_code').value})`;
-            opt.selected = true;
-            $('asset_select').insertBefore(opt,$('asset_select').firstChild);
-        }
-        return;
-    }
+// عند اختيار أو كتابة الأصل في حقل البحث الذكي
+\$('assetSearch').addEventListener('input', (e) => {
+    const val = e.target.value;
+    const options = \$('assetsList').options;
     
-    const asset = loadedAssets.find(a => a.code === code);
-    if (asset) {
-        \$('asset_code').value = asset.code;
-        \$('asset_name').value = asset.name;
-        if (asset.location) \$('apartment').value = asset.location;
+    for (let opt of options) {
+        if (opt.value === val) {
+            // تعبئة البيانات الخفية والمرئية تلقائياً
+            \$('asset_code').value = opt.dataset.code;
+            \$('asset_name').value = opt.dataset.name;
+            \$('apartment').value = opt.dataset.apartment;
+            \$('office').value = opt.dataset.office;
+            return;
+        }
     }
+    // إذا كتب يدوي اعتبره اسم أصل جديد
+    \$('asset_name').value = val;
+    \$('asset_code').value = 'NEW-' + Date.now();
 });
 
-window.addEventListener('DOMContentLoaded', loadAssetsDropdown);
+window.addEventListener('DOMContentLoaded', loadAssets);
 
 \$('reportForm').addEventListener('submit',async e=>{e.preventDefault();const btn=$('submitBtn'),msg=$('message');btn.disabled=true;msg.textContent='';
 const v=id=>\$(id).value.trim();
-const selectedCode = v('asset_code') || \$('asset_select').value;
-const selectedAssetObj = loadedAssets.find(a => a.code === selectedCode);
-const finalAssetName = selectedAssetObj ? selectedAssetObj.name : (v('asset_name') || \$('asset_select').selectedOptions[0]?.text || 'أصل عام');
-
-const ticket={ticket_no:'TKT-'+Date.now().toString().slice(-8),date:v('date'),asset_code:selectedCode,asset_name:finalAssetName,apartment:v('apartment'),office:v('office'),category:v('category'),type:v('type'),priority:v('priority'),description:v('description'),reporter:v('reporter'),contact:v('contact'),technician:'غير محدد',status:'جديد',resolution_date:null,parts:'',cost:0,duration:0,history:[{at:new Date().toISOString(),text:'تم تسجيل البلاغ من صفحة البلاغات المستقلة'}]};
-try{if(!db)throw new Error('لم يتم إعداد الاتصال بقاعدة البيانات بعد.');const {data,error}=await db.from('bgc_app_state').select('payload').eq('id',1).maybeSingle();if(error)throw error;const p=data?.payload||{tickets:[],seq:0,customAssets:[]};p.tickets=Array.isArray(p.tickets)?p.tickets:[];p.tickets.push(ticket);p.seq=Math.max(Number(p.seq)||0,parseInt(ticket.ticket_no.replace(/\D/g,''))||0);const {error:saveError}=await db.from('bgc_app_state').upsert({id:1,payload:p,updated_at:new Date().toISOString()});if(saveError)throw saveError;$('reportForm'].reset();$('date').value=new Date().toISOString().slice(0,10);loadAssetsDropdown();msg.style.color='green';msg.textContent='تم تسجيل البلاغ بنجاح. رقم البلاغ: '+ticket.ticket_no+' — سيظهر في لوحة التحكم.';}catch(err){console.error(err);msg.style.color='#b00020';msg.textContent='لم يتم حفظ البلاغ. تأكد من إعداد قاعدة البيانات وسياسات الوصول، ثم حاول مجددًا.';}finally{btn.disabled=false;}});
+const ticket={
+    ticket_no:'TKT-'+Date.now().toString().slice(-8),
+    date:v('date'),
+    asset_code:v('asset_code') || ('AST-'+Date.now()),
+    asset_name:v('asset_name') || v('assetSearch'),
+    apartment:v('apartment'),
+    office:v('office'),
+    category:v('category'),
+    type:v('type'),
+    priority:v('priority'),
+    description:v('description'),
+    reporter:v('reporter'),
+    contact:v('contact'),
+    technician:'غير محدد',
+    status:'جديد',
+    resolution_date:null,
+    parts:'',
+    cost:0,
+    duration:0,
+    history:[{at:new Date().toISOString(),text:'تم تسجيل البلاغ من صفحة البلاغات الذكية'}]
+};
+try{
+    if(!db)throw new Error('لم يتم إعداد الاتصال بقاعدة البيانات بعد.');
+    const {data,error}=await db.from('bgc_app_state').select('payload').eq('id',1).maybeSingle();
+    if(error)throw error;
+    const p=data?.payload||{tickets:[],seq:0,customAssets:[]};
+    p.tickets=Array.isArray(p.tickets)?p.tickets:[];
+    p.tickets.push(ticket);
+    p.seq=Math.max(Number(p.seq)||0,parseInt(ticket.ticket_no.replace(/\D/g,''))||0);
+    const {error:saveError}=await db.from('bgc_app_state').upsert({id:1,payload:p,updated_at:new Date().toISOString()});
+    if(saveError)throw saveError;
+    $('reportForm').reset();$('date').value=new Date().toISOString().slice(0,10);
+    loadAssets();
+    msg.style.color='green';
+    msg.textContent='تم تسجيل البلاغ بنجاح. رقم البلاغ: '+ticket.ticket_no+' — سيظهر في لوحة التحكم.';
+}catch(err){
+    console.error(err);
+    msg.style.color='#b00020';
+    msg.textContent='لم يتم حفظ البلاغ: '+err.message;
+}finally{
+    btn.disabled=false;
+}});
 </script></body></html>
