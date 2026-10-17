@@ -1,5 +1,5 @@
 const SUPABASE_URL = 'https://amkkmgjwjmszzgrdbma.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_02NPOBMPU3n_QiMDYI0Leg_ZDSS230_';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFta2ttZ2p3am1zenpnenJkYm1hIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIwNjA5NTEsImV4cCI6MjEwNzYzNjk1MX0.R7E1pMwS34wmdBxmyeS1KB4B1peCf0FYwzedup58VgQ';
 
 window.BGC_SUPABASE_URL = SUPABASE_URL;
 window.BGC_SUPABASE_ANON_KEY = SUPABASE_KEY;
