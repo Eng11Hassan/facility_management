@@ -1,185 +1,216 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>نظام بلاغات BGC - النسخة المباشرة</title>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إنشاء بلاغ صيانة - إدارة المرافق</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <!-- Supabase JS Client -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="./supabase-config.js"></script>
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        :root { --red: #E30613; --bg: #f4f5f7; }
-        body { margin: 0; background: var(--bg); font-family: Cairo, sans-serif; color: #222; }
-        .top { background: #111; color: #fff; padding: 20px; border-bottom: 5px solid var(--red); font-size: 20px; font-weight: bold; }
-        .wrap { max-width: 900px; margin: 20px auto; padding: 0 15px; }
-        .card { background: white; border-radius: 12px; padding: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); }
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-        .full { grid-column: 1 / -1; }
-        label { font-weight: 700; font-size: 14px; display: block; margin-bottom: 5px; }
-        input, select, textarea { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-family: inherit; font-size: 14px; }
-        textarea { height: 100px; }
-        .btn { background: var(--red); color: white; border: none; padding: 12px 25px; border-radius: 6px; font-weight: bold; font-size: 16px; cursor: pointer; width: 100%; margin-top: 15px; }
-        .msg { margin-top: 15px; font-weight: bold; text-align: center; }
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap');
+        body { font-family: 'Cairo', sans-serif; }
     </style>
 </head>
-<body>
-    <div class="top">BGC — تسجيل بلاغ صيانة مباشر</div>
-    <div class="wrap">
-        <div class="card">
-            <form id="directForm">
-                <div class="grid">
-                    <div class="full">
-                        <label>اختر الأصل من القائمة *</label>
-                        <select id="assetDropdown" required style="font-size: 15px; font-weight: bold; background: #fffdfd; border: 2px solid #E30613;">
-                            <option value="">-- جاري تحميل الأصول المعتمدة --</option>
-                        </select>
-                    </div>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col items-center justify-center p-4">
 
-                    <!-- حقول مخفية للترحيل -->
-                    <input type="hidden" id="asset_code">
-                    <input type="hidden" id="asset_name">
-
-                    <div>
-                        <label>المبنى / الموقع *</label>
-                        <input type="text" id="apartment" required readonly style="background: #f9f9f9;">
-                    </div>
-                    <div>
-                        <label>الغرفة / الإدارة *</label>
-                        <input type="text" id="office" required readonly style="background: #f9f9f9;">
-                    </div>
-
-                    <div>
-                        <label>التصنيف</label>
-                        <select id="category"><option>كهرباء</option><option>تكييف</option><option>سباكة</option><option>أثاث</option><option>أمان وإنذار</option><option>أجهزة أخرى</option><option>أخرى</option></select>
-                    </div>
-                    <div>
-                        <label>نوع الطلب *</label>
-                        <select id="type"><option>عطل</option><option>صيانة وقائية</option><option>طلب خدمة</option></select>
-                    </div>
-
-                    <div>
-                        <label>اسم مقدم البلاغ *</label>
-                        <input type="text" id="reporter" required placeholder="اكتب اسمك">
-                    </div>
-                    <div>
-                        <label>تاريخ البلاغ</label>
-                        <input type="date" id="date" required>
-                    </div>
-
-                    <div class="full">
-                        <label>وصف المشكلة بالتفصيل *</label>
-                        <textarea id="description" required placeholder="اكتب وصف العطل..."></textarea>
-                    </div>
-
-                    <div class="full">
-                        <button type="submit" class="btn" id="submitBtn">إرسال البلاغ إلى لوحة التحكم</button>
-                    </div>
-                </div>
-            </form>
-            <div id="msg" class="msg"></div>
+    <div class="w-full max-w-2xl bg-slate-900 border border-slate-800 rounded-2xl shadow-xl p-6 md:p-8">
+        <div class="flex items-center justify-between mb-6 pb-4 border-b border-slate-800">
+            <div>
+                <h1 class="text-xl font-bold text-white flex items-center gap-2">
+                    <i class="fa-solid fa-triangle-exclamation text-red-500"></i> تسجيل بلاغ صيانة جديد
+                </h1>
+                <p class="text-sm text-slate-400 mt-1">اختر الشقة ثم الغرفة لتحديد الأصل بدقة</p>
+            </div>
+            <a href="index.html" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-2 rounded-lg transition">
+                <i class="fa-solid fa-arrow-right ml-1"></i> العودة للرئيسية
+            </a>
         </div>
+
+        <form id="reportForm" class="space-y-5">
+            <!-- Dropdown 1: الشقة / النطاق -->
+            <div>
+                <label class="block text-sm font-medium text-slate-300 mb-2">1. اختر الشقة / الوحدة</label>
+                <select id="apartmentSelect" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-red-500 transition" required>
+                    <option value="">-- اختر الشقة أولاً --</option>
+                </select>
+            </div>
+
+            <!-- Dropdown 2: الغرفة / الموقع الفرعي -->
+            <div>
+                <label class="block text-sm font-medium text-slate-300 mb-2">2. اختر الغرفة / الموقع</label>
+                <select id="roomSelect" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-red-500 transition" disabled required>
+                    <option value="">-- اختر الشقة أولاً لتحديد الغرفة --</option>
+                </select>
+            </div>
+
+            <!-- Dropdown 3: الأصل -->
+            <div>
+                <label class="block text-sm font-medium text-slate-300 mb-2">3. اختر الأصل المطلوب صيانتة</label>
+                <select id="assetSelect" name="asset_id" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-red-500 transition" disabled required>
+                    <option value="">-- اختر الغرفة أولاً لتحديد الأصل --</option>
+                </select>
+            </div>
+
+            <!-- وصف المشكلة -->
+            <div>
+                <label class="block text-sm font-medium text-slate-300 mb-2">وصف المشكلة / ملاحظات الصيانة</label>
+                <textarea id="issueDescription" rows="4" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-red-500 transition" placeholder="اكتب تفاصيل العطل أو الصيانة المطلوبة هنا..." required></textarea>
+            </div>
+
+            <!-- زر الإرسال -->
+            <button type="submit" id="submitBtn" class="w-full bg-red-600 hover:bg-red-500 text-white font-bold py-3 px-4 rounded-xl transition shadow-lg shadow-red-900/20 flex items-center justify-center gap-2">
+                <i class="fa-solid fa-paper-plane"></i> إرسال البلاغ
+            </button>
+        </form>
     </div>
 
-<script>
-// قاعدة الأصول الأصلية الكاملة والمحدثة
-const ALL_ASSETS = [{"code": "BGC-AST-001", "apartment": "شقة 1", "office": "عام", "category": "لوحات كهرباء", "name": "لوحة كهرباء 36 خط"}, {"code": "BGC-AST-002", "apartment": "شقة 1", "office": "مكتب مهندس عيسى", "category": "إضاءة", "name": "سبوتات"}, {"code": "BGC-AST-003", "apartment": "شقة 1", "office": "مكتب مهندس عيسى", "category": "إضاءة", "name": "نجفة"}, {"code": "BGC-AST-004", "apartment": "شقة 1", "office": "مكتب مهندس عيسى", "category": "أمان وإنذار", "name": "حساس حريق"}, {"code": "BGC-AST-005", "apartment": "شقة 1", "office": "مكتب مهندس عيسى", "category": "تكييف", "name": "تكييف 3 حصان"}, {"code": "BGC-AST-006", "apartment": "شقة 1", "office": "مكتب أستاذة سحر", "category": "إضاءة", "name": "خط ليد"}, {"code": "BGC-AST-007", "apartment": "شقة 1", "office": "مكتب أستاذة سحر", "category": "إضاءة", "name": "سبوتات"}, {"code": "BGC-AST-008", "apartment": "شقة 1", "office": "مكتب أستاذة سحر", "category": "أمان وإنذار", "name": "حساس حريق"}, {"code": "BGC-AST-009", "apartment": "شقة 1", "office": "مكتب أستاذة أميرة", "category": "إضاءة", "name": "سبوتات"}, {"code": "BGC-AST-010", "apartment": "شقة 1", "office": "مكتب أستاذة أميرة", "category": "إضاءة", "name": "كشاف مدور"}, {"code": "BGC-AST-011", "apartment": "شقة 1", "office": "مكتب أستاذة أميرة", "category": "أمان وإنذار", "name": "حساس"}, {"code": "BGC-AST-012", "apartment": "شقة 1", "office": "مكتب أستاذة أميرة", "category": "تكييف", "name": "تكييف 1.5 حصان"}, {"code": "BGC-AST-013", "apartment": "شقة 1", "office": "الطرقة", "category": "إضاءة", "name": "سبوتات"}, {"code": "BGC-AST-014", "apartment": "شقة 1", "office": "الطرقة", "category": "إضاءة", "name": "ماجنتيك"}, {"code": "BGC-AST-015", "apartment": "شقة 1", "office": "الطرقة", "category": "أمان وإنذار", "name": "حساس"}, {"code": "BGC-AST-016", "apartment": "شقة 1", "office": "الطرقة", "category": "أمان وإنذار", "name": "كاميرا"}, {"code": "BGC-AST-017", "apartment": "شقة 1", "office": "الطرقة", "category": "تكييف", "name": "تكييف 2.25 حصان"}, {"code": "BGC-AST-018", "apartment": "شقة 1", "office": "مكتب مهندس محسن", "category": "إضاءة", "name": "سبوتات"}, {"code": "BGC-AST-019", "apartment": "شقة 1", "office": "مكتب مهندس محسن", "category": "إضاءة", "name": "ليد"}, {"code": "BGC-AST-020", "apartment": "شقة 1", "office": "مكتب مهندس محسن", "category": "أمان وإنذار", "name": "حساس"}, {"code": "BGC-AST-021", "apartment": "شقة 1", "office": "مكتب مهندس محسن", "category": "تكييف", "name": "تكييف 2.75 حصان"}, {"code": "BGC-AST-022", "apartment": "شقة 1", "office": "مكتب أستاذة شروق", "category": "إضاءة", "name": "سبوتات"}, {"code": "BGC-AST-023", "apartment": "شقة 1", "office": "مكتب أستاذة شروق", "category": "إضاءة", "name": "نجفة"}, {"code": "BGC-AST-024", "apartment": "شقة 1", "office": "مكتب أستاذة شروق", "category": "أمان وإنذار", "name": "حساس"}, {"code": "BGC-AST-025", "apartment": "شقة 1", "office": "مكتب أستاذة شروق", "category": "تكييف", "name": "تكييف 2.75 حصان"}, {"code": "BGC-AST-026", "apartment": "شقة 1", "office": "مكتب مهندس محمود", "category": "إضاءة", "name": "سبوتات"}, {"code": "BGC-AST-027", "apartment": "شقة 1", "office": "مكتب مهندس محمود", "category": "إضاءة", "name": "نجفة"}, {"code": "BGC-AST-028", "apartment": "شقة 1", "office": "مكتب مهندس محمود", "category": "أمان وإنذار", "name": "حساس"}, {"code": "BGC-AST-029", "apartment": "شقة 1", "office": "مكتب مهندس محمود", "category": "تكييف", "name": "تكييف 2.25 حصان"}, {"code": "BGC-AST-030", "apartment": "شقة 2", "office": "عام", "category": "لوحات كهرباء", "name": "لوحة كهرباء 36 خط"}, {"code": "BGC-AST-031", "apartment": "شقة 2", "office": "مكتب المشروعات", "category": "إضاءة", "name": "سبوتات"}, {"code": "BGC-AST-032", "apartment": "شقة 2", "office": "مكتب المشروعات", "category": "إضاءة", "name": "نجفة"}, {"code": "BGC-AST-033", "apartment": "شقة 2", "office": "مكتب المشروعات", "category": "أمان وإنذار", "name": "حساس"}, {"code": "BGC-AST-034", "apartment": "شقة 2", "office": "مكتب المشروعات", "category": "إضاءة", "name": "شريط ليد"}, {"code": "BGC-AST-035", "apartment": "شقة 2", "office": "مكتب المشروعات", "category": "تكييف", "name": "تكييف 2.25 حصان"}, {"code": "BGC-AST-036", "apartment": "شقة 2", "office": "مكتب مهندس عزب", "category": "إضاءة", "name": "سبوتات"}, {"code": "BGC-AST-037", "apartment": "شقة 2", "office": "مكتب مهندس عزب", "category": "إضاءة", "name": "نجفة"}, {"code": "BGC-AST-038", "apartment": "شقة 2", "office": "مكتب مهندس عزب", "category": "أمان وإنذار", "name": "حساس"}, {"code": "BGC-AST-039", "apartment": "شقة 2", "office": "مكتب مهندس عزب", "category": "تكييف", "name": "تكييف 2.25 حصان"}, {"code": "BGC-AST-040", "apartment": "شقة 2", "office": "مكتب مهندس خالد", "category": "إضاءة", "name": "سبوتات"}, {"code": "BGC-AST-041", "apartment": "شقة 2", "office": "مكتب مهندس خالد", "category": "إضاءة", "name": "نجفة"}, {"code": "BGC-AST-042", "apartment": "شقة 2", "office": "مكتب مهندس خالد", "category": "أمان وإنذار", "name": "حساس"}, {"code": "BGC-AST-043", "apartment": "شقة 2", "office": "مكتب مهندس خالد", "category": "إضاءة", "name": "ليد"}, {"code": "BGC-AST-044", "apartment": "شقة 2", "office": "مكتب مهندس خالد", "category": "تكييف", "name": "تكييف 2.25 حصان"}, {"code": "BGC-AST-045", "apartment": "شقة 2", "office": "طرقة الشقة الثانية", "category": "إضاءة", "name": "سبوتات"}, {"code": "BGC-AST-046", "apartment": "شقة 2", "office": "طرقة الشقة الثانية", "category": "أمان وإنذار", "name": "حساس"}, {"code": "BGC-AST-047", "apartment": "شقة 2", "office": "طرقة الشقة الثانية", "category": "أمان وإنذار", "name": "كاميرا"}, {"code": "BGC-AST-048", "apartment": "شقة 2", "office": "حمام الطرقة", "category": "إضاءة", "name": "سبوتات"}, {"code": "BGC-AST-049", "apartment": "شقة 2", "office": "حمام الطرقة", "category": "أجهزة أخرى", "name": "سخان"}, {"code": "BGC-AST-050", "apartment": "شقة 2", "office": "غرفة IT", "category": "إضاءة", "name": "سبوتات"}, {"code": "BGC-AST-051", "apartment": "شقة 2", "office": "غرفة IT", "category": "إضاءة", "name": "كشاف ليد مسطرة"}, {"code": "BGC-AST-052", "apartment": "شقة 2", "office": "غرفة IT", "category": "أمان وإنذار", "name": "كاميرا"}, {"code": "BGC-AST-053", "apartment": "شقة 2", "office": "غرفة IT", "category": "أمان وإنذار", "name": "حساس"}, {"code": "BGC-AST-054", "apartment": "شقة 2", "office": "غرفة IT", "category": "تكييف", "name": "تكييف 2.25 حصان"}, {"code": "BGC-AST-055", "apartment": "شقة 2", "office": "غرفة IT", "category": "أمان وإنذار", "name": "لوحة إنذار حريق"}, {"code": "BGC-AST-056", "apartment": "شقة 2", "office": "المطبخ", "category": "إضاءة", "name": "سبوتات"}, {"code": "BGC-AST-057", "apartment": "شقة 2", "office": "المطبخ", "category": "أمان وإنذار", "name": "حساس حرارة"}, {"code": "BGC-AST-058", "apartment": "شقة 2", "office": "مكتب أستاذة هناء", "category": "إضاءة", "name": "خط ليد"}, {"code": "BGC-AST-059", "apartment": "شقة 2", "office": "مكتب أستاذة هناء", "category": "أمان وإنذار", "name": "حساس"}, {"code": "BGC-AST-060", "apartment": "شقة 2", "office": "مكتب أستاذة هناء", "category": "إضاءة", "name": "سبوتات"}, {"code": "BGC-AST-061", "apartment": "شقة 2", "office": "مكتب أستاذة هناء", "category": "إضاءة", "name": "دلاية"}, {"code": "BGC-AST-062", "apartment": "شقة 2", "office": "مكتب مهندس صلاح", "category": "إضاءة", "name": "سبوتات"}, {"code": "BGC-AST-063", "apartment": "شقة 2", "office": "مكتب مهندس صلاح", "category": "إضاءة", "name": "نجفة"}, {"code": "BGC-AST-064", "apartment": "شقة 2", "office": "مكتب مهندس صلاح", "category": "أمان وإنذار", "name": "حساس"}, {"code": "BGC-AST-065", "apartment": "شقة 2", "office": "مكتب مهندس صلاح", "category": "تكييف", "name": "تكييف 3 حصان"}, {"code": "BGC-AST-066", "apartment": "شقة 3", "office": "عام", "category": "لوحات كهرباء", "name": "لوحة كهرباء 36 خط"}, {"code": "BGC-AST-067", "apartment": "شقة 3", "office": "مكتب المشتريات", "category": "إضاءة", "name": "سبوتات"}, {"code": "BGC-AST-068", "apartment": "شقة 3", "office": "مكتب المشتريات", "category": "إضاءة", "name": "نجفة"}, {"code": "BGC-AST-069", "apartment": "شقة 3", "office": "مكتب المشتريات", "category": "إضاءة", "name": "دلاية"}, {"code": "BGC-AST-070", "apartment": "شقة 3", "office": "مكتب المشتريات", "category": "أمان وإنذار", "name": "حساس"}, {"code": "BGC-AST-071", "apartment": "شقة 3", "office": "مكتب المشتريات", "category": "تكييف", "name": "تكييف 2.25 حصان"}, {"code": "BGC-AST-072", "apartment": "شقة 3", "office": "الطرقة", "category": "إضاءة", "name": "سبوتات"}, {"code": "BGC-AST-073", "apartment": "شقة 3", "office": "الطرقة", "category": "أمان وإنذار", "name": "حساس"}, {"code": "BGC-AST-074", "apartment": "شقة 3", "office": "الطرقة", "category": "أمان وإنذار", "name": "كاميرا"}, {"code": "BGC-AST-075", "apartment": "شقة 3", "office": "مكتب دكتور أشرف", "category": "إضاءة", "name": "سبوتات"}, {"code": "BGC-AST-076", "apartment": "شقة 3", "office": "مكتب دكتور أشرف", "category": "إضاءة", "name": "نجفة"}, {"code": "BGC-AST-077", "apartment": "شقة 3", "office": "مكتب دكتور أشرف", "category": "أمان وإنذار", "name": "حساس"}, {"code": "BGC-AST-078", "apartment": "شقة 3", "office": "مكتب دكتور أشرف", "category": "تكييف", "name": "تكييف 2.25 حصان"}, {"code": "BGC-AST-079", "apartment": "شقة 3", "office": "حمام الطرقة", "category": "إضاءة", "name": "سبوتات"}, {"code": "BGC-AST-080", "apartment": "شقة 3", "office": "حمام الطرقة", "category": "إضاءة", "name": "ليد"}, {"code": "BGC-AST-081", "apartment": "شقة 3", "office": "مكتب أستاذ عبد الرحمن", "category": "إضاءة", "name": "سبوتات"}, {"code": "BGC-AST-082", "apartment": "شقة 3", "office": "مكتب أستاذ عبد الرحمن", "category": "إضاءة", "name": "نجفة"}, {"code": "BGC-AST-083", "apartment": "شقة 3", "office": "مكتب أستاذ عبد الرحمن", "category": "أمان وإنذار", "name": "حساس"}, {"code": "BGC-AST-084", "apartment": "شقة 3", "office": "مكتب أستاذ عبد الرحمن", "category": "إضاءة", "name": "ليد"}, {"code": "BGC-AST-085", "apartment": "شقة 3", "office": "مكتب أستاذ عبد الرحمن", "category": "تكييف", "name": "تكييف 2.25 حصان"}, {"code": "BGC-AST-086", "apartment": "شقة 3", "office": "مكتب مهندس لندراوي", "category": "إضاءة", "name": "سبوتات"}, {"code": "BGC-AST-087", "apartment": "شقة 3", "office": "مكتب مهندس لندراوي", "category": "إضاءة", "name": "نجفة"}, {"code": "BGC-AST-088", "apartment": "شقة 3", "office": "مكتب مهندس لندراوي", "category": "أمان وإنذار", "name": "حساس"}, {"code": "BGC-AST-089", "apartment": "شقة 3", "office": "مكتب مهندس لندراوي", "category": "تكييف", "name": "تكييف 2.25 حصان"}, {"code": "BGC-AST-090", "apartment": "شقة 3", "office": "طرقة م. لندراوي", "category": "إضاءة", "name": "ليد"}, {"code": "BGC-AST-091", "apartment": "شقة 3", "office": "طرقة م. لندراوي", "category": "أمان وإنذار", "name": "حساس"}, {"code": "BGC-AST-092", "apartment": "شقة 3", "office": "المطبخ", "category": "إضاءة", "name": "سبوتات"}, {"code": "BGC-AST-093", "apartment": "شقة 3", "office": "المطبخ", "category": "أمان وإنذار", "name": "حساس حرارة"}, {"code": "BGC-AST-094", "apartment": "شقة 3", "office": "مكتب مهندس باسم", "category": "إضاءة", "name": "سبوتات"}, {"code": "BGC-AST-095", "apartment": "شقة 3", "office": "مكتب مهندس باسم", "category": "إضاءة", "name": "نجفة"}, {"code": "BGC-AST-096", "apartment": "شقة 3", "office": "مكتب مهندس باسم", "category": "أمان وإنذار", "name": "حساس"}, {"code": "BGC-AST-097", "apartment": "شقة 3", "office": "مكتب مهندس باسم", "category": "أمان وإنذار", "name": "كاميرا"}, {"code": "BGC-AST-098", "apartment": "شقة 3", "office": "مكتب مهندس باسم", "category": "تكييف", "name": "تكييف 3 حصان"}, {"code": "BGC-AST-099", "apartment": "شقة 4", "office": "عام", "category": "لوحات كهرباء", "name": "لوحة كهرباء 36 خط"}, {"code": "BGC-AST-100", "apartment": "شقة 4", "office": "السكرتارية", "category": "إضاءة", "name": "سبوتات"}, {"code": "BGC-AST-101", "apartment": "شقة 4", "office": "السكرتارية", "category": "إضاءة", "name": "نجفة"}, {"code": "BGC-AST-102", "apartment": "شقة 4", "office": "السكرتارية", "category": "أمان وإنذار", "name": "كاميرا"}, {"code": "BGC-AST-103", "apartment": "شقة 4", "office": "السكرتارية", "category": "أمان وإنذار", "name": "حساس"}, {"code": "BGC-AST-104", "apartment": "شقة 4", "office": "السكرتارية", "category": "تكييف", "name": "تكييف 2.25 حصان"}, {"code": "BGC-AST-105", "apartment": "شقة 4", "office": "غرفة الاجتماعات", "category": "إضاءة", "name": "سبوتات"}, {"code": "BGC-AST-106", "apartment": "شقة 4", "office": "غرفة الاجتماعات", "category": "إضاءة", "name": "نجفة"}, {"code": "BGC-AST-107", "apartment": "شقة 4", "office": "غرفة الاجتماعات", "category": "أمان وإنذار", "name": "حساس"}, {"code": "BGC-AST-108", "apartment": "شقة 4", "office": "غرفة الاجتماعات", "category": "تكييف", "name": "تكييف 3 حصان"}, {"code": "BGC-AST-109", "apartment": "شقة 4", "office": "الحمام", "category": "إضاءة", "name": "سبوتات"}, {"code": "BGC-AST-110", "apartment": "شقة 4", "office": "الحمام", "category": "إضاءة", "name": "دلاية"}, {"code": "BGC-AST-111", "apartment": "شقة 4", "office": "الطرقة الرئيسية", "category": "إضاءة", "name": "ليد"}, {"code": "BGC-AST-112", "apartment": "شقة 4", "office": "الطرقة الرئيسية", "category": "إضاءة", "name": "سبوتات"}, {"code": "BGC-AST-113", "apartment": "شقة 4", "office": "الطرقة الرئيسية", "category": "أمان وإنذار", "name": "حساس"}, {"code": "BGC-AST-114", "apartment": "شقة 4", "office": "الطرقة الرئيسية", "category": "أمان وإنذار", "name": "كاميرا"}, {"code": "BGC-AST-115", "apartment": "شقة 4", "office": "الطرقة الرئيسية", "category": "تكييف", "name": "تكييف 2.25 حصان"}, {"code": "BGC-AST-116", "apartment": "شقة 4", "office": "مكتب مخزن أستاذة آمنة", "category": "إضاءة", "name": "سبوتات"}, {"code": "BGC-AST-117", "apartment": "شقة 4", "office": "مكتب مخزن أستاذة آمنة", "category": "إضاءة", "name": "كشاف مدور"}, {"code": "BGC-AST-118", "apartment": "شقة 4", "office": "مكتب مخزن أستاذة آمنة", "category": "أمان وإنذار", "name": "حساس"}, {"code": "BGC-AST-119", "apartment": "شقة 4", "office": "مكتب مخزن أستاذة آمنة", "category": "تكييف", "name": "تكييف 1.5 حصان"}, {"code": "BGC-AST-120", "apartment": "شقة 4", "office": "طرقة مهندس بسام", "category": "إضاءة", "name": "سبوتات"}, {"code": "BGC-AST-121", "apartment": "شقة 4", "office": "طرقة مهندس بسام", "category": "إضاءة", "name": "مسطرة ماجنتك"}, {"code": "BGC-AST-122", "apartment": "شقة 4", "office": "طرقة مهندس بسام", "category": "أمان وإنذار", "name": "حساس"}, {"code": "BGC-AST-123", "apartment": "شقة 4", "office": "المطعم", "category": "إضاءة", "name": "سبوتات"}, {"code": "BGC-AST-124", "apartment": "شقة 4", "office": "المطعم", "category": "إضاءة", "name": "ماجنتيك ليد"}, {"code": "BGC-AST-125", "apartment": "شقة 4", "office": "المطعم", "category": "أمان وإنذار", "name": "حساس"}, {"code": "BGC-AST-126", "apartment": "شقة 4", "office": "المطعم", "category": "تكييف", "name": "تكييف 2.25 حصان"}, {"code": "BGC-AST-127", "apartment": "شقة 4", "office": "مكتب مهندس بسام", "category": "إضاءة", "name": "سبوتات"}, {"code": "BGC-AST-128", "apartment": "شقة 4", "office": "مكتب مهندس بسام", "category": "إضاءة", "name": "نجفة"}, {"code": "BGC-AST-129", "apartment": "شقة 4", "office": "مكتب مهندس بسام", "category": "أمان وإنذار", "name": "حساس"}, {"code": "BGC-AST-130", "apartment": "شقة 4", "office": "مكتب مهندس بسام", "category": "تكييف", "name": "تكييف 2.25 حصان"}, {"code": "BGC-AST-131", "apartment": "شقة 4", "office": "حمام مهندس بسام", "category": "إضاءة", "name": "سبوتات"}, {"code": "BGC-AST-132", "apartment": "شقة 4", "office": "المسجد", "category": "إضاءة", "name": "سبوتات"}, {"code": "BGC-AST-133", "apartment": "شقة 4", "office": "المسجد", "category": "إضاءة", "name": "نجفة"}, {"code": "BGC-AST-134", "apartment": "شقة 4", "office": "المسجد", "category": "أمان وإنذار", "name": "حساس"}, {"code": "BGC-AST-135", "apartment": "شقة 4", "office": "المسجد", "category": "تكييف", "name": "تكييف 2.25 حصان"}, {"code": "BGC-AST-136", "apartment": "الطرقات المشتركة", "office": "طرقة أمام شقة 1 و 2", "category": "إضاءة", "name": "سبوتات"}, {"code": "BGC-AST-137", "apartment": "الطرقات المشتركة", "office": "طرقة أمام شقة 1 و 2", "category": "إضاءة", "name": "ليد ماجنتيك"}, {"code": "BGC-AST-138", "apartment": "الطرقات المشتركة", "office": "طرقة أمام شقة 1 و 2", "category": "إضاءة", "name": "ليد لوجو BGC"}, {"code": "BGC-AST-139", "apartment": "الطرقات المشتركة", "office": "طرقة أمام شقة 1 و 2", "category": "أمان وإنذار", "name": "كاميرا"}, {"code": "BGC-AST-140", "apartment": "الطرقات المشتركة", "office": "طرقة أمام شقة 3 و 4", "category": "إضاءة", "name": "سبوتات"}, {"code": "BGC-AST-141", "apartment": "الطرقات المشتركة", "office": "طرقة أمام شقة 3 و 4", "category": "إضاءة", "name": "ماجنتيك ليد"}, {"code": "BGC-AST-142", "apartment": "الطرقات المشتركة", "office": "طرقة أمام شقة 4", "category": "أمان وإنذار", "name": "كاميرا"}];
+    <!-- Script منطق جلب الأصول وتحديث الـ Dropdowns -->
+    <script>
+        // إعدادات اتصال Supabase (تأكد من مطابقتها لمشروعك أو جلبها من ملف الإعدادات المشترك)
+        const SUPABASE_URL = 'YOUR_SUPABASE_URL';
+        const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-document.getElementById('date').value = new Date().toISOString().slice(0, 10);
+        let allAssets = [];
 
-const select = document.getElementById('assetDropdown');
-select.innerHTML = '<option value="">— برجاء اختيار الأصل المطلوب للصيانة —</option>';
+        const apartmentSelect = document.getElementById('apartmentSelect');
+        const roomSelect = document.getElementById('roomSelect');
+        const assetSelect = document.getElementById('assetSelect');
+        const reportForm = document.getElementById('reportForm');
 
-ALL_ASSETS.forEach(asset => {
-    const opt = document.createElement('option');
-    opt.value = asset.code;
-    // التنسيق المطلوب تماماً: الكود — الموقع (الغرفة) — اسم الأصل
-    opt.textContent = `${asset.code} — ${asset.apartment} (${asset.office}) — ${asset.name}`;
-    opt.dataset.apartment = asset.apartment;
-    opt.dataset.office = asset.office;
-    opt.dataset.name = asset.name;
-    select.appendChild(opt);
-});
+        // جلب الأصول من جدول Supabase عند التحميل
+        async function fetchAssets() {
+            try {
+                const { data, error } = await supabaseClient
+                    .from('assets')
+                    .select('*');
+                
+                if (error) throw error;
+                allAssets = data || [];
+                
+                populateApartments();
+            } catch (err) {
+                console.error('خطأ في جلب الأصول:', err.message);
+                alert('فشل تحميل قائمة الأصول من قاعدة البيانات.');
+            }
+        }
 
-select.addEventListener('change', (e) => {
-    const opt = e.target.selectedOptions[0];
-    if (opt && opt.value) {
-        document.getElementById('asset_code').value = opt.value;
-        document.getElementById('asset_name').value = opt.dataset.name;
-        document.getElementById('apartment').value = opt.dataset.apartment;
-        document.getElementById('office').value = opt.dataset.office;
-    } else {
-        document.getElementById('asset_code').value = '';
-        document.getElementById('asset_name').value = '';
-        document.getElementById('apartment').value = '';
-        document.getElementById('office').value = '';
-    }
-});
+        // تعبئة قائمة الشقق الفريدة (مثلاً اعتماداً على حقل location أو apartment في الجدول)
+        function populateApartments() {
+            // افترضنا أن حقل الشقة مسجل بأسم apartment أو location في جدول الأصول
+            // يمكنك تعديل المفتاح بناءً على شكل أعمدة الإكسيل اللي رفعتها
+            const apartments = [...new Set(allAssets.map(item => item.apartment || item.location))].filter(Boolean);
+            
+            apartmentSelect.innerHTML = '<option value="">-- اختر الشقة --</option>';
+            apartments.forEach(apt => {
+                const opt = document.createElement('option');
+                opt.value = apt;
+                opt.textContent = apt;
+                apartmentSelect.appendChild(opt);
+            });
+        }
 
-// الاتصال بقاعدة البيانات وحفظ البلاغ
-const configured = window.BGC_SUPABASE_URL && !window.BGC_SUPABASE_URL.includes('PASTE_') && window.BGC_SUPABASE_ANON_KEY && !window.BGC_SUPABASE_ANON_KEY.includes('PASTE_') && window.supabase;
-const db = configured ? window.supabase.createClient(window.BGC_SUPABASE_URL, window.BGC_SUPABASE_ANON_KEY) : null;
+        // عند تغيير الشقة
+        apartmentSelect.addEventListener('change', (e) => {
+            const selectedApt = e.target.value;
+            
+            // إعادة ضبط الغرف والأصول
+            roomSelect.innerHTML = '<option value="">-- اختر الغرفة --</option>';
+            assetSelect.innerHTML = '<option value="">-- اختر الأصل --</option>';
+            roomSelect.disabled = true;
+            assetSelect.disabled = true;
 
-document.getElementById('directForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const btn = document.getElementById('submitBtn');
-    const msg = document.getElementById('msg');
-    btn.disabled = true;
-    msg.textContent = 'جاري حفظ البلاغ...';
-    msg.style.color = '#333';
+            if (!selectedApt) return;
 
-    const v = id => document.getElementById(id).value.trim();
-    const ticket = {
-        ticket_no: 'TKT-' + Date.now().toString().slice(-8),
-        date: v('date'),
-        asset_code: v('asset_code'),
-        asset_name: v('asset_name'),
-        apartment: v('apartment'),
-        office: v('office'),
-        category: v('category'),
-        type: v('type'),
-        priority: 'عادية',
-        description: v('description'),
-        reporter: v('reporter'),
-        contact: '',
-        technician: 'غير محدد',
-        status: 'تحت الإجراء',
-        resolution_date: null,
-        parts: '',
-        cost: 0,
-        duration: 0,
-        history: [{ at: new Date().toISOString(), text: 'تم تسجيل البلاغ من النظام المباشر' }]
-    };
+            // تصفية الغرف التابعة للشقة المختارة
+            const filteredRooms = [...new Set(
+                allAssets
+                    .filter(item => (item.apartment || item.location) === selectedApt)
+                    .map(item => item.room || item.sub_location)
+            )].filter(Boolean);
 
-    try {
-        if (!db) throw new Error('الاتصال بقاعدة بيانات Supabase غير متوفر.');
-        const { data, error } = await db.from('bgc_app_state').select('payload').eq('id', 1).maybeSingle();
-        if (error) throw error;
+            filteredRooms.forEach(room => {
+                const opt = document.createElement('option');
+                opt.value = room;
+                opt.textContent = room;
+                roomSelect.appendChild(opt);
+            });
 
-        const p = data?.payload || { tickets: [], seq: 0 };
-        p.tickets = Array.isArray(p.tickets) ? p.tickets : [];
-        p.tickets.push(ticket);
-        p.seq = Math.max(Number(p.seq) || 0, parseInt(ticket.ticket_no.replace(/\D/g, '')) || 0);
-
-        const { error: saveErr } = await db.from('bgc_app_state').upsert({
-            id: 1,
-            payload: p,
-            updated_at: new Date().toISOString()
+            roomSelect.disabled = false;
         });
-        if (saveErr) throw saveErr;
 
-        msg.style.color = 'green';
-        msg.textContent = '✅ تم تسجيل البلاغ بنجاح! رقم البلاغ: ' + ticket.ticket_no + ' (سيظهر فوراً في لوحة التحكم)';
-        document.getElementById('directForm').reset();
-        document.getElementById('date').value = new Date().toISOString().slice(0, 10);
-        select.value = '';
-    } catch (err) {
-        console.error(err);
-        msg.style.color = '#E30613';
-        msg.textContent = '❌ حدث خطأ أثناء الحفظ: ' + err.message;
-    } finally {
-        btn.disabled = false;
-    }
-});
-</script>
+        // عند تغيير الغرفة
+        roomSelect.addEventListener('change', (e) => {
+            const selectedApt = apartmentSelect.value;
+            const selectedRoom = e.target.value;
+
+            assetSelect.innerHTML = '<option value="">-- اختر الأصل --</option>';
+            assetSelect.disabled = true;
+
+            if (!selectedRoom) return;
+
+            // تصفية الأصول التابعة للشقة وغرفتها
+            const filteredAssets = allAssets.filter(item => 
+                (item.apartment || item.location) === selectedApt && 
+                (item.room || item.sub_location) === selectedRoom
+            );
+
+            filteredAssets.forEach(asset => {
+                const opt = document.createElement('option');
+                opt.value = asset.id || asset.asset_code; // معرف الأصل أو كوده
+                opt.textContent = `${asset.asset_name} (${asset.asset_code || 'بدون كود'})`;
+                assetSelect.appendChild(opt);
+            });
+
+            assetSelect.disabled = false;
+        });
+
+        // إرسال البلاغ لقاعدة البيانات
+        reportForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> جاري الإرسال...';
+
+            const reportData = {
+                apartment: apartmentSelect.value,
+                room: roomSelect.value,
+                asset_id: assetSelect.value,
+                description: document.getElementById('issueDescription').value,
+                status: 'Pending',
+                created_at: new Date()
+            };
+
+            try {
+                // افترضنا جدول التذاكر والبلاغات اسمه maintenance_tickets
+                const { error } = await supabaseClient
+                    .from('maintenance_tickets')
+                    .insert([reportData]);
+
+                if (error) throw error;
+
+                alert('تم تسجيل البلاغ بنجاح!');
+                reportForm.reset();
+                roomSelect.disabled = true;
+                assetSelect.disabled = true;
+                roomSelect.innerHTML = '<option value="">-- اختر الشقة أولاً لتحديد الغرفة --</option>';
+                assetSelect.innerHTML = '<option value="">-- اختر الغرفة أولاً لتحديد الأصل --</option>';
+            } catch (err) {
+                console.error('خطأ في حفظ البلاغ:', err.message);
+                alert('حدث خطأ أثناء حفظ البلاغ، حاول مرة أخرى.');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> إرسال البلاغ';
+            }
+        });
+
+        // تشغيل الجلب عند فتح الصفحة
+        fetchAssets();
+    </script>
 </body>
 </html>
